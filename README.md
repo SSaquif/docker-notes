@@ -1,5 +1,7 @@
 # Docker
 
+All notes on Docker
+
 ## Contents
 
 <!-- toc -->
@@ -12,6 +14,10 @@
   - [Containers vs Virtual Machines](#containers-vs-virtual-machines)
   - [Docker Architecture](#docker-architecture)
   - [Dockerization of an App](#dockerization-of-an-app)
+    - [Dockerfile Example](#dockerfile-example)
+    - [Running The App using Docker](#running-the-app-using-docker)
+  - [A Note for Windows Users](#a-note-for-windows-users)
+  - [Quick Commands](#quick-commands)
 
 <!-- tocstop -->
 
@@ -63,7 +69,7 @@ Quick Summmary for now
 
 ## Dockerization of an App
 
-We can add docker to any application by simply adding a `dockerfile`
+We can add docker to any application by simply adding a `Dockerfile`, the name is capitalised
 
 Docker uses this file to package up our app into an `image`
 
@@ -74,3 +80,86 @@ The image contains everything our app needs to run, ex
     3. Application files
     4. 3rd party libraries
     5. Environmental Variables
+
+### Dockerfile Example
+
+```dockerfile
+FROM node:alpine
+COPY . /app
+WORKDIR /app
+CMD node index.js
+```
+
+1. Line 1: `FROM node:alpine`
+
+   - Typically we start with a base image (it can be OS, RE like node)
+   - Base Image will have bunch of files and we will add to it
+   - We started of with `node` image
+   - We then optionally added the `linux distribution alphine`
+   - `alpine` is a very small distribution so it will keep image size small
+
+2. Line 2: `COPY . /app`
+
+   - We want our image to have all our required files
+   - The Dockerfile is at the root of our project, ie `.`
+   - So we copy over everything and put in a `/app` folder for the image to use
+
+3. Line 3: `WORKDIR /app`
+
+   - This line is optional
+   - This basically specifies where the image will find the files
+   - ie the working directory for the image to use
+
+4. Line 4: `CMD node index.js `
+   - Finally this line tells docker how to run the app
+   - If we omitted line 3, we would have to do `CMD node /app/index.js `
+
+### Running The App using Docker
+
+First We tell docker to build/package up our application.
+
+Then we simply
+
+```bash
+# -t means tag, a tag name for our image
+# In this case first-dockerized-app
+# Then specify where to find dockerfile
+# In this case the current directory so just `.`
+docker build -t first-dockerized-app .
+
+# run app from any directory using image name
+docker run first-dockerized-app
+```
+
+## A Note for Windows Users
+
+Windows 10+ ships with a Linux kernel. So when using Docker, you can choose between Windows or Linux containers. Windows containers (processes) need to talk to the Windows kernel under the hood. Linux containers need the Linux kernel.
+
+These are essentially two different isolated worlds. You can choose between these two worlds by right-clicking on the Docker icon in the notification tray (in the bottom status bar).
+
+Remember: the images and containers in the Windows world are invisible to the Linux world. You'd need Windows containers only if you need an image that starts from Windows.
+
+## Quick Commands
+
+I have to use `sudo` before running docker each time
+
+See sections above for details on some commands
+
+```bash
+# build image named first-dockerized-app from current folder
+docker build -t first-dockerized-app .
+
+# list all docker images and details
+docker image ls
+# or
+docker images
+
+# get help about image command
+docker image
+
+# run app from any directory using image name, after image creation
+docker run image-name
+
+# pulling image from dockerhub
+docker pull image-id
+```
