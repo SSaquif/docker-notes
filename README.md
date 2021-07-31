@@ -17,7 +17,18 @@ All notes on Docker
     - [Dockerfile Example](#dockerfile-example)
     - [Running The App using Docker](#running-the-app-using-docker)
   - [A Note for Windows Users](#a-note-for-windows-users)
+  - [Containers vs Images](#containers-vs-images)
+  - [Building Images](#building-images)
+    - [From](#from)
+    - [WORKDIR](#workdir)
+    - [COPY](#copy)
+    - [ADD](#add)
+    - [RUN](#run)
+    - [ENV](#env)
+    - [Excluding Files .dockerignore](#excluding-files-dockerignore)
+    - [React App Image](#react-app-image)
   - [Quick Commands](#quick-commands)
+  - [References](#references)
 
 <!-- tocstop -->
 
@@ -139,6 +150,105 @@ These are essentially two different isolated worlds. You can choose between thes
 
 Remember: the images and containers in the Windows world are invisible to the Linux world. You'd need Windows containers only if you need an image that starts from Windows.
 
+## Containers vs Images
+
+Just rmember `multiple Containers` can be spinned up from the `same Image`. But the `Containers` are all `isolated`.
+
+|                                         Images                                         |                                  Containers                                  |
+| :------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
+| A image contains all the files and configuration settings needed to run an application |   Once we have an image we can start one or multople container(s) from it    |
+|                                     A cut down OS                                      |                 Is can of like in VM in the following sense                  |
+|                                  3rd Party Libraries                                   |            1. Provides an isolated environment for executing apps            |
+|                                   Application files                                    |                  2. Can be stoppeds and restarted like VMs                   |
+|                                 Environment Variables                                  | Is just a sytem process, that has it's own file system provided by the image |
+|                                                                                        | Each container is an `isolated instance`, can't access each others resources |
+|                                                                                        |          There are ways to share data between containers if needed           |
+
+## Building Images
+
+Following section looks into how to build docker images by going through each docker command. At the end there is an example for building an image of the boilerplate react app.
+
+### From
+
+### WORKDIR
+
+Creates the working directory for the image
+
+```docker
+WORKDIR /app
+```
+
+### COPY
+
+To copy files to the image. The structure is basically `COPY what where`
+
+`.` signifies the `WORKDIR`
+
+We can only copy from the directory the Dockerfile is in. We can not copy anything outside of it, ie no goin uo folder(s)
+
+The `COPY` command has 2 forms, one is like regular command. The other form takes an array like this `COPY ["filename", "destination"]`
+
+```dockerfile
+# copy one file into WORKDIR /app
+COPY package.json /app
+# copy multiple files, but where copy needs to end with /
+COPY package.json package-lock.json /app/
+# copy using pattern
+COPY package*.json /app/
+# copy everything from current dir into WORKDIR
+# absolute path
+COPY . /app/
+# relative path if we aldready set `WORKDIR /app`
+COPY . .
+# copy file(s) with space in name, have to use the the array form
+COPY ["file 1.txt", "readme.md", "."]
+```
+
+### ADD
+
+Same as `COPY`, but has `2 additional features.`
+
+First, You can copy using a url if you have access to that file
+
+```docker
+ADD https://www.somewhere.com/data.json .
+```
+
+Second, If you add a zip file, it will be automatically unzipped
+
+```docker
+ADD somefile.zip .
+```
+
+### RUN
+
+Can run any valid OS commands using this.
+
+```docker
+RUN ls -l
+RUN npm install
+```
+
+### ENV
+
+Used to set up environmental variables.
+
+```docker
+# new better way
+ENV API_URL=http://www.somesite.com/
+
+# old way, space instead of =
+ENV API_URL http://www.somesite.com/
+```
+
+### Excluding Files .dockerignore
+
+We use `.dockerignore` to exlude files from the image. The file name is `case-sensitive`
+
+Basically docker's `.gitignore`, whatever you don't want copied put it here. Example `node_modules`. As usual transferring image after copying nude_modules to a remote docker server is a waste. The image size will be huge.
+
+### React App Image
+
 ## Quick Commands
 
 I have to use `sudo` before running docker each time
@@ -149,17 +259,40 @@ See sections above for details on some commands
 # build image named first-dockerized-app from current folder
 docker build -t first-dockerized-app .
 
+# get help about image command
+docker image
+
 # list all docker images and details
 docker image ls
 # or
 docker images
 
-# get help about image command
-docker image
 
 # run app from any directory using image name, after image creation
 docker run image-name
 
 # pulling image from dockerhub
 docker pull image-id
+
+# running an image/app
+# If we don't have the image locally
+# It will try and automatically pull one with same id, if that exists
+docker run image-id
+
+# start container in interactive mode
+# ubuntu is the image-id
+# this will run an ubuntu image
+# a new ubuntu shell will show up
+dock run -it ubuntu
+
+# list of running processes/containers
+docker ps
+
+# list all containers (stopped ones too)
+docker ps -a
 ```
+
+## References
+
+1. [Mosh Hamedani's Docker Course](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448372)
+2. Prof Shane McIntosh's COMP 437: Software Delivery Course Slides
