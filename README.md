@@ -27,6 +27,7 @@ All notes on Docker
     - [ENV](#env)
     - [Excluding Files .dockerignore](#excluding-files-dockerignore)
     - [React App Image](#react-app-image)
+    - [Docker and Managing Users](#docker-and-managing-users)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -249,6 +250,17 @@ Basically docker's `.gitignore`, whatever you don't want copied put it here. Exa
 
 ### React App Image
 
+### Docker and Managing Users
+
+Also see managings users in linux notes if needed. In order to first create user.
+
+```bash
+# the image used in the example was ubuntu
+# interactively run bash in a pseudo shell
+# login as the user john
+docker exec -it -u john imageid bash
+```
+
 ## Quick Commands
 
 I have to use `sudo` before running docker each time
@@ -256,7 +268,7 @@ I have to use `sudo` before running docker each time
 See sections above for details on some commands
 
 ```bash
-# build image named first-dockerized-app from current folder
+# build/rebuild image named first-dockerized-app from current folder
 docker build -t first-dockerized-app .
 
 # get help about image command
@@ -279,7 +291,10 @@ docker pull image-id
 # It will try and automatically pull one with same id, if that exists
 docker run image-id
 
-# start container in interactive mode
+# start container in interactive mode using -i
+# -t switch might be unnecessary
+# according to man docker run
+# -t means to allocate a pseudo-tty (pseudo terminal, see libux notes)
 # ubuntu is the image-id
 # this will run an ubuntu image
 # a new ubuntu shell will show up
@@ -290,6 +305,7 @@ docker ps
 
 # list all containers (stopped ones too)
 docker ps -a
+
 ```
 
 ## References
