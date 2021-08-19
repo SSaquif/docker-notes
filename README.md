@@ -18,7 +18,7 @@ All notes on Docker
     - [Running The App using Docker](#running-the-app-using-docker)
   - [A Note for Windows Users](#a-note-for-windows-users)
   - [Containers vs Images](#containers-vs-images)
-  - [Building Images](#building-images)
+  - [DockerFile Instructions](#dockerfile-instructions)
     - [From](#from)
     - [WORKDIR](#workdir)
     - [COPY](#copy)
@@ -26,8 +26,12 @@ All notes on Docker
     - [RUN](#run)
     - [ENV](#env)
     - [Excluding Files .dockerignore](#excluding-files-dockerignore)
+    - [Managing Users](#managing-users)
+  - [Building Images](#building-images)
+    - [Registries](#registries)
+    - [Selecting the Right Base Image](#selecting-the-right-base-image)
+    - [Running Shell Sessions Inside Containers](#running-shell-sessions-inside-containers)
     - [React App Image](#react-app-image)
-    - [Docker and Managing Users](#docker-and-managing-users)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -165,9 +169,16 @@ Just rmember `multiple Containers` can be spinned up from the `same Image`. But 
 |                                                                                        | Each container is an `isolated instance`, can't access each others resources |
 |                                                                                        |          There are ways to share data between containers if needed           |
 
-## Building Images
+## DockerFile Instructions
 
-Following section looks into how to build docker images by going through each docker command. At the end there is an example for building an image of the boilerplate react app.
+Following section looks into how to build docker images by going through each docker command. In the next `Building Images section` we will see an example for building an image of the boilerplate react app.
+
+The section outlines
+
+- Basic instructions like adding and removing files for docker
+- running terminal commands on docker
+- setting `env variables` in docker
+- exposing ports
 
 ### From
 
@@ -248,9 +259,7 @@ We use `.dockerignore` to exlude files from the image. The file name is `case-se
 
 Basically docker's `.gitignore`, whatever you don't want copied put it here. Example `node_modules`. As usual transferring image after copying nude_modules to a remote docker server is a waste. The image size will be huge.
 
-### React App Image
-
-### Docker and Managing Users
+### Managing Users
 
 Also see managings users in linux notes if needed. In order to first create user.
 
@@ -261,6 +270,54 @@ Also see managings users in linux notes if needed. In order to first create user
 docker exec -it -u john imageid bash
 ```
 
+## Building Images
+
+We will now combine the knowledge from previous section and build and example image
+
+### Registries
+
+Images are kept in registries. The default registry is dockerhub. But some images, like microsoft images, are kept in other registries like the microsoft container registry. For those you need to use the complete URL. Example:
+
+```docker
+# mcr == microsoft container registry
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
+```
+
+### Selecting the Right Base Image
+
+The base image can be an OS or OS + Runtime Environment
+
+If you are a js dev you likely want want to start with node image, for C# you want to start with .NET image, for python a pythom image and so on.
+
+[Language specific samples](https://docs.docker.com/language/)
+
+For our example we need a node image, there are many flavors of node image + some OS available to us. They are identified by there tags. Each tag has the OS and CPU architecture specified and also the size. We use alpine OS here due to it's much smaller image size compared to something like ubuntu.
+
+[Node Images](https://hub.docker.com/_/node?tab=tags&page=1&ordering=last_updated)
+
+By default the latest tag is used (see below). But we will never do this because let's say the latest node version is updated. Then the next time we build our app using docker, it will update the node version. Something we might not want
+
+```docker
+# both commands are identical
+# don't do this
+FROM node
+FROM node:latest
+```
+
+### Running Shell Sessions Inside Containers
+
+Often we want to Run Shell Sessions Inside Containers. To have a look around.
+
+We can do this as follows
+
+```bash
+# Run Shell Sessions Inside Containers
+docker run -it first-dockerized-app sh # alpine
+docker run -it first-dockerized-app bash # ubuntu
+```
+
+### React App Image
+
 ## Quick Commands
 
 I have to use `sudo` before running docker each time
@@ -268,8 +325,19 @@ I have to use `sudo` before running docker each time
 See sections above for details on some commands
 
 ```bash
+# switches
+# -i = interactive, brings up an interactive shell
+# for ex if we run just a node image, -i will bring up the node cli
+
+# -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
+# or google pseudo-tty
+
 # build/rebuild image named first-dockerized-app from current folder
 docker build -t first-dockerized-app .
+
+# Run Shell Sessions Inside Containers
+docker run -it first-dockerized-app sh # alpine
+docker run -it first-dockerized-app bash # ubuntu
 
 # get help about image command
 docker image
@@ -294,7 +362,7 @@ docker run image-id
 # start container in interactive mode using -i
 # -t switch might be unnecessary
 # according to man docker run
-# -t means to allocate a pseudo-tty (pseudo terminal, see libux notes)
+# -t means to allocate a pseudo-tty (pseudo terminal, see linux notes)
 # ubuntu is the image-id
 # this will run an ubuntu image
 # a new ubuntu shell will show up
@@ -312,3 +380,4 @@ docker ps -a
 
 1. [Mosh Hamedani's Docker Course](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448372)
 2. Prof Shane McIntosh's COMP 437: Software Delivery Course Slides
+3. [Language specific samples](https://docs.docker.com/language/)
