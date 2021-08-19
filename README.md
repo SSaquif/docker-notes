@@ -18,6 +18,12 @@ All notes on Docker
     - [Running The App using Docker](#running-the-app-using-docker)
   - [A Note for Windows Users](#a-note-for-windows-users)
   - [Containers vs Images](#containers-vs-images)
+  - [Building Images & Running Containers](#building-images--running-containers)
+    - [Build Context](#build-context)
+    - [Registries](#registries)
+    - [Selecting the Right Base Image](#selecting-the-right-base-image)
+    - [Running Containers](#running-containers)
+    - [Running Shell Sessions Inside Containers](#running-shell-sessions-inside-containers)
   - [Anatomy of a Dockerfile](#anatomy-of-a-dockerfile)
     - [FROM](#from)
     - [WORKDIR](#workdir)
@@ -27,16 +33,19 @@ All notes on Docker
     - [RUN](#run)
     - [ENV](#env)
     - [EXPOSE](#expose)
-    - [Managing Users](#managing-users)
+    - [Managing Users (RUN & USER commands)](#managing-users-run--user-commands)
       - [Login In as a Particular User in Interactive Shell](#login-in-as-a-particular-user-in-interactive-shell)
       - [Creating System User and Primary Group](#creating-system-user-and-primary-group)
-    - [Defining Entrypoints](#defining-entrypoints)
-  - [Building Images](#building-images)
-    - [Build Context](#build-context)
-    - [Registries](#registries)
-    - [Selecting the Right Base Image](#selecting-the-right-base-image)
-    - [Running Shell Sessions Inside Containers](#running-shell-sessions-inside-containers)
-    - [React App Image](#react-app-image)
+      - [Updating Dockerfile](#updating-dockerfile)
+    - [CMD (setting the default command to run)](#cmd-setting-the-default-command-to-run)
+      - [Difference between RUN & CMD](#difference-between-run--cmd)
+    - [ENTRYPOINT](#entrypoint)
+      - [ENTRYPOINT VS CMD](#entrypoint-vs-cmd)
+  - [Speeding Up Builds](#speeding-up-builds)
+  - [Removing Images and Containers](#removing-images-and-containers)
+  - [Tagging Images](#tagging-images)
+  - [Sharing Images](#sharing-images)
+  - [Saving and Loading Images](#saving-and-loading-images)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -162,7 +171,7 @@ Remember: the images and containers in the Windows world are invisible to the Li
 
 ## Containers vs Images
 
-Just rmember `multiple Containers` can be spinned up from the `same Image`. But the `Containers` are all `isolated`.
+Just remember `multiple Containers` can be spinned up from the `same Image`. But the `Containers` are all `isolated`.
 
 |                                         Images                                         |                                  Containers                                  |
 | :------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
@@ -174,7 +183,70 @@ Just rmember `multiple Containers` can be spinned up from the `same Image`. But 
 |                                                                                        | Each container is an `isolated instance`, can't access each others resources |
 |                                                                                        |          There are ways to share data between containers if needed           |
 
+## Building Images & Running Containers
+
+We build images using `docker build -switches image-id .` command. The `.` is current folder and needs a dokcerfile in that folder.
+
+### Build Context
+
+When we execute a build command, the docker client sends the contect of the directory, in the above case `.`(current folder), to the docker engine. This is called the build context.
+
+Then the docker engine will execute the instructions of the dockerfile in the folder 1 by 1. The docker engine will not have access to any files outside the directory.
+
+### Registries
+
+Images are kept in registries. The default registry is dockerhub. But some images, like microsoft images, are kept in other registries like the microsoft container registry. For those you need to use the complete URL. Example:
+
+```docker
+# mcr == microsoft container registry
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
+```
+
+### Selecting the Right Base Image
+
+The base image can be an OS or OS + Runtime Environment
+
+If you are a js dev you likely want want to start with node image, for C# you want to start with .NET image, for python a pythom image and so on.
+
+[Language specific samples](https://docs.docker.com/language/)
+
+For our example we need a node image, there are many flavors of node image + some OS available to us. They are identified by there tags. Each tag has the OS and CPU architecture specified and also the size. We use alpine OS here due to it's much smaller image size compared to something like ubuntu.
+
+[Node Images](https://hub.docker.com/_/node?tab=tags&page=1&ordering=last_updated)
+
+By default the latest tag is used (see below). But we will never do this because let's say the latest node version is updated. Then the next time we build our app using docker, it will update the node version. Something we might not want
+
+```docker
+# both commands are identical
+# don't do this
+FROM node
+FROM node:latest
+```
+
+### Running Containers
+
+```bash
+# Run Shell Sessions Inside Containers
+docker run first-dockerized-app
+docker run first-dockerized-app
+```
+
+### Running Shell Sessions Inside Containers
+
+The above isn't as useful when testing containers. Often we want to Run Shell Sessions Inside Containers. To have a look around.
+
+We can do this as follows
+
+```bash
+# Run Shell Sessions Inside Containers
+# To understand the switches see the Quick Commands section
+docker run -it first-dockerized-app sh # alpine
+docker run -it first-dockerized-app bash # ubuntu
+```
+
 ## Anatomy of a Dockerfile
+
+But before we can build proper images, we need a dockerfile to build the image from. In this section we will break down the different parts of the dockerfile, by creating an image for the default boiler plate react app. So first we creat a react app as usual and add a dockerfile to it.
 
 Following section looks into how to build docker images by going through each docker command. In the next `Building Images section` we will see an example for building an image of the boilerplate react app.
 
@@ -304,7 +376,7 @@ EXPOSE 3000
 
 \*\*`Important:` `Expose` command does not automatically publish the port on the host. It's just `a form of documentation` to tell us this container will eventually listen to port 3000. So later when we properly run this app inside a docker container, we know that we should map a port on the host host to port 3000 on the container. Will do that in next section.
 
-### Managing Users
+### Managing Users (RUN & USER commands)
 
 Also see managings users in linux notes if needed. In order to first create user.
 
@@ -350,63 +422,126 @@ USER app
 
 `Side Note:` After building the image it is a good idea to check if the user has been created as expected. Do this by starting a Shell Session and running the command `whoami` on the terminal. The newly created user will fall in the `others` group. Next if you run 'ls -la' you should also see that the newly created user only has read permissions. This is what we want. If we execute the app as root user, hackers could potentially rewrite everything.
 
-### Defining Entrypoints
+#### Updating Dockerfile
 
-## Building Images
-
-We will now combine the knowledge from previous section and build an example image
-
-We build images using `docker build -switches image-id .` command. The `.` is current folder and needs a dokcerfile in that folder.
-
-### Build Context
-
-When we execute a build command, the docker client sends the contect of the directory, in the above case `.`(current folder), to the docker engine. This is called the build context.
-
-Then the docker engine will execute the instructions of the dockerfile in the folder 1 by 1. The docker engine will not have access to any files outside the directory.
-
-### Registries
-
-Images are kept in registries. The default registry is dockerhub. But some images, like microsoft images, are kept in other registries like the microsoft container registry. For those you need to use the complete URL. Example:
+Now we should have the following dockerfile
 
 ```docker
-# mcr == microsoft container registry
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
+FROM node:14.17.5-alpine3.14
+WORKDIR /app
+COPY . .
+RUN yarn install
+# the env var is unnecessary, just for testing
+ENV API_URL=http://api.myapp.com/
+# read notes to see how expose works
+EXPOSE 3000
+RUN addgroup app && adduser -S -G app app
+USER app
 ```
 
-### Selecting the Right Base Image
-
-The base image can be an OS or OS + Runtime Environment
-
-If you are a js dev you likely want want to start with node image, for C# you want to start with .NET image, for python a pythom image and so on.
-
-[Language specific samples](https://docs.docker.com/language/)
-
-For our example we need a node image, there are many flavors of node image + some OS available to us. They are identified by there tags. Each tag has the OS and CPU architecture specified and also the size. We use alpine OS here due to it's much smaller image size compared to something like ubuntu.
-
-[Node Images](https://hub.docker.com/_/node?tab=tags&page=1&ordering=last_updated)
-
-By default the latest tag is used (see below). But we will never do this because let's say the latest node version is updated. Then the next time we build our app using docker, it will update the node version. Something we might not want
-
-```docker
-# both commands are identical
-# don't do this
-FROM node
-FROM node:latest
-```
-
-### Running Shell Sessions Inside Containers
-
-Often we want to Run Shell Sessions Inside Containers. To have a look around.
-
-We can do this as follows
+Now after we have bnuilt our image, we can spin up an container and try and run the react app using `yarn start` from the container like this
 
 ```bash
-# Run Shell Sessions Inside Containers
-docker run -it first-dockerized-app sh # alpine
-docker run -it first-dockerized-app bash # ubuntu
+docker run dockerized-react-app yarn start
 ```
 
-### React App Image
+`Important:` However that does not work. We get `EACCES: permission denied, mkdir '/app/node_modules/.cache'`. Because the current user `app` was created later and does not have the correct permissions.
+
+If you run `ls -l` from within a interactive shell running in the container, we will see the `root` user is the actual owner of the files.
+
+To fix this, we have to do 2 things
+
+1. Create our group and user first.
+2. Make a change to COPY instruction. See the links to see why (mosh doesnt do this)
+   - [Stackoverflow link 1](https://stackoverflow.com/questions/55926705/docker-error-eacces-permission-denied-mkdir-project-node-modules-cache)
+   - [Stackoverflow link 2](https://stackoverflow.com/questions/41097652/how-to-fix-ctrlc-inside-a-docker-container)
+
+So we update the dockerfile as follows. `app` is the primary user and group
+
+```docker
+FROM node:14.17.5-alpine3.14
+RUN addgroup app && adduser -S -G app app
+USER app
+WORKDIR /app
+# Give owner rights to the current user
+COPY --chown=app:app . .
+RUN yarn install
+# the env var is unnecessary, just for testing
+ENV API_URL=http://api.myapp.com/
+# read notes to see how expose works
+EXPOSE 3000
+```
+
+If you run `ls -l` now, you will see instead of `root` the owner is `app` for the files and folders
+
+### CMD (setting the default command to run)
+
+Next we want to set a default command to run when we run our container, instead of having to type it each time. We use `CMD`
+
+The CMD instruction has 2 forms
+
+1. Shell form
+2. Execution form, which takes an array (use this)
+
+The common practice is use the exec form, because the shell form will start another shell to run the commands so it starts an extra process.
+
+We add one of these lines to the dockerfile
+
+```docker
+# Shell form
+CMD yarn start
+# Exec form
+CMD ["yarn", "start"]
+```
+
+#### Difference between RUN & CMD
+
+The `RUN` instruction is a build time instruction, executing when `building the image`. The `CMD` instruction is a run time instruction, executed when we `run the container`
+
+[Differences between RUN and CMD](https://nickjanetakis.com/blog/docker-tip-7-the-difference-between-run-and-cmd)
+
+It does not make sense to have multiple `CMD` instructions in the dockerfile. If you do, only the last one will take effect.
+
+### ENTRYPOINT
+
+A very simmilar command to `CMD`, also has 2 forms like `CMD`. Shell and Execution forms.
+
+```docker
+ENTRYPOINT ["yarn", "start"]
+```
+
+#### ENTRYPOINT VS CMD
+
+We can easily override the CMD comand. For example we can start an interactive shell session instead of executing the CMD instructions. Like we have done previously and below. But it's little harder to overwrite entrypoint.
+
+```bash
+# will overwrite CMD
+docker run -it  dockerized-react-app sh
+# will overwrite entrypoint
+docker run -it  dockerized-react-app --entrypoint sh
+
+```
+
+## Speeding Up Builds
+
+## Removing Images and Containers
+
+```bash
+# docker remove container
+# -f = force
+docker container rm -f <container_id>
+
+# docker remove image
+# -f = force
+# won't work even with -f, if image is used by some container
+docker image rm -f <image_id>
+```
+
+## Tagging Images
+
+## Sharing Images
+
+## Saving and Loading Images
 
 ## Quick Commands
 
@@ -465,8 +600,18 @@ docker pull image-id
 # list of running processes/containers
 docker ps
 
-# list all containers (stopped ones too)
-docker ps -a
+# list all containers
+docker ps -a #(stopped ones too)
+docker container ls
+
+# docker remove container
+# -f = force
+docker container rm -f <container_id>
+
+# docker remove image
+# -f = force
+# won't work even with -f, if image is used by some container
+docker image rm -f <image_id>
 ```
 
 ## References
