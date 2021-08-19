@@ -8,6 +8,9 @@ All notes on Docker
 
 - [Docker](#docker)
   - [Contents](#contents)
+  - [Issues](#issues)
+    - [Replicating The Issue](#replicating-the-issue)
+    - [My Fix for the Issue](#my-fix-for-the-issue)
   - [Installation](#installation)
   - [Introduction](#introduction)
     - [Why Docker?](#why-docker)
@@ -50,6 +53,63 @@ All notes on Docker
   - [References](#references)
 
 <!-- tocstop -->
+
+## Issues
+
+Before I continue I want to list out 1 issue. It could be the result of using ubuntu according to a stack overflow answer.
+
+The issue is right now if I add `node_modules/` folder to the dockerignore file and then create and set a new user for my image in the dockerfile. The new user does not have the permission to make the `node_modules` folder and the process fails
+
+For now I am not adding `node_modules/` to the dockerignore file.
+
+I have not been able to figure out how to give the user correct permissions. Here are some stack overflow links I have read.
+
+- [This one says it might be due to ubuntu but no solution given](https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat)
+- [This one has solution using npm and not yarn](https://stackoverflow.com/questions/55926705/docker-error-eacces-permission-denied-mkdir-project-node-modules-cache)
+- [Open Issue on similar topic](https://github.com/nodejs/docker-node/issues/740)
+
+### Replicating The Issue
+
+The state of my `Dockerfile` & `.dockerignore` files to replicate the error
+
+```.dockerignore
+node_modules/
+```
+
+```docker
+FROM node:14.17.5-alpine3.14
+RUN addgroup app && adduser -S -G app app
+USER app
+WORKDIR /app
+COPY --chown=app:app . .
+RUN yarn install
+# the env var is unnecessary, just for testing
+ENV API_URL=http://api.myapp.com/
+# read notes to see how expose works
+EXPOSE 3000
+CMD ["yarn", "start"]
+```
+
+### My Fix for the Issue
+
+```docker
+FROM node:14.17.5-alpine3.14
+RUN addgroup app && adduser -S -G app app
+# 2 lines added to fix permission issue
+# when running yarn install
+RUN mkdir /app
+RUN chown -R app:app /app
+# Set app as user AFTER setting permissions
+USER app
+WORKDIR /app
+COPY --chown=app:app . .
+RUN yarn install
+# the env var is unnecessary, just for testing
+ENV API_URL=http://api.myapp.com/
+# read notes to see how expose works
+EXPOSE 3000
+CMD ["yarn", "start"]
+```
 
 ## Installation
 
@@ -391,6 +451,8 @@ docker exec -it -u john imageid bash
 
 #### Creating System User and Primary Group
 
+`Important:` I am having permission issues trying run `yarn install`. For Details see issue section above.
+
 First let's see how this would be done from the alpine command line. Alpine only has `adduser` command no `useradd` (see linux notes if you need a refresher).
 
 It common est practice in linux to keep the name of the user and their primary group same.
@@ -423,6 +485,8 @@ USER app
 `Side Note:` After building the image it is a good idea to check if the user has been created as expected. Do this by starting a Shell Session and running the command `whoami` on the terminal. The newly created user will fall in the `others` group. Next if you run 'ls -la' you should also see that the newly created user only has read permissions. This is what we want. If we execute the app as root user, hackers could potentially rewrite everything.
 
 #### Updating Dockerfile
+
+`Important:` I will have to update this section, once I fix the aforementioned issue.
 
 Now we should have the following dockerfile
 
@@ -461,9 +525,14 @@ So we update the dockerfile as follows. `app` is the primary user and group
 ```docker
 FROM node:14.17.5-alpine3.14
 RUN addgroup app && adduser -S -G app app
+# 2 lines added to fix permission issue
+# when running yarn install
+RUN mkdir /app
+RUN chown -R app:app /app
+# next create user and set dir
 USER app
 WORKDIR /app
-# Give owner rights to the current user
+# Give owner rights to the current user (probably unnecessary now)
 COPY --chown=app:app . .
 RUN yarn install
 # the env var is unnecessary, just for testing
@@ -514,15 +583,55 @@ ENTRYPOINT ["yarn", "start"]
 
 We can easily override the CMD comand. For example we can start an interactive shell session instead of executing the CMD instructions. Like we have done previously and below. But it's little harder to overwrite entrypoint.
 
+It's personal preference which command you want to use
+
 ```bash
 # will overwrite CMD
 docker run -it  dockerized-react-app sh
 # will overwrite entrypoint
 docker run -it  dockerized-react-app --entrypoint sh
-
 ```
 
 ## Speeding Up Builds
+
+So images are basically made up of layers (see the video for furthur clarification). We can check out the size of the layers to help optimize. We can check the layers by running. Each Instruction is kind of like a layer.
+
+```bash
+# This will print out he layers
+# Top = newest
+docker history dockerized-react-app
+```
+
+When an instruction in the dockerfile has not changed, we don't necessarily have to create it from scratch, can use the cache (from layer I guess) instead.
+
+Once a layer has been rebuilt all the following layers have to be rebuilt as well.
+
+We don't necessarily want to run the npm install step if only code has changed and not dependencies. We can do this by copying the package.json and lock files separately.
+
+Here's our new docker file
+
+```docker
+FROM node:14.17.5-alpine3.14
+RUN addgroup app && adduser -S -G app app
+
+# 2 lines added to fix permission issue
+# when running yarn install
+RUN mkdir /app
+RUN chown -R app:app /app
+# Set app as user AFTER setting permissions
+USER app
+WORKDIR /app
+# Copy and install separtely to speed up builds
+COPY --chown=app:app package*.json yarn.lock ./
+RUN yarn install
+# Give owner rights to the current user
+COPY --chown=app:app . .
+# the env var is unnecessary, just for testing
+ENV API_URL=http://api.myapp.com/
+# read notes to see how expose works
+EXPOSE 3000
+CMD ["yarn", "start"]
+```
 
 ## Removing Images and Containers
 
@@ -530,11 +639,15 @@ docker run -it  dockerized-react-app --entrypoint sh
 # docker remove container
 # -f = force
 docker container rm -f <container_id>
+# remove all stopped containers
+docker container prune
 
 # docker remove image
 # -f = force
 # won't work even with -f, if image is used by some container
 docker image rm -f <image_id>
+# remove all 'dangling' images
+docker image prune
 ```
 
 ## Tagging Images
@@ -607,7 +720,8 @@ docker container ls
 # docker remove container
 # -f = force
 docker container rm -f <container_id>
-
+# remove all stopped containers
+docker container prune
 # docker remove image
 # -f = force
 # won't work even with -f, if image is used by some container
