@@ -18,16 +18,21 @@ All notes on Docker
     - [Running The App using Docker](#running-the-app-using-docker)
   - [A Note for Windows Users](#a-note-for-windows-users)
   - [Containers vs Images](#containers-vs-images)
-  - [DockerFile Instructions](#dockerfile-instructions)
-    - [From](#from)
+  - [Anatomy of a Dockerfile](#anatomy-of-a-dockerfile)
+    - [FROM](#from)
     - [WORKDIR](#workdir)
     - [COPY](#copy)
     - [ADD](#add)
+    - [Excluding Files `.dockerignore`](#excluding-files-dockerignore)
     - [RUN](#run)
     - [ENV](#env)
-    - [Excluding Files .dockerignore](#excluding-files-dockerignore)
+    - [EXPOSE](#expose)
     - [Managing Users](#managing-users)
+      - [Login In as a Particular User in Interactive Shell](#login-in-as-a-particular-user-in-interactive-shell)
+      - [Creating System User and Primary Group](#creating-system-user-and-primary-group)
+    - [Defining Entrypoints](#defining-entrypoints)
   - [Building Images](#building-images)
+    - [Build Context](#build-context)
     - [Registries](#registries)
     - [Selecting the Right Base Image](#selecting-the-right-base-image)
     - [Running Shell Sessions Inside Containers](#running-shell-sessions-inside-containers)
@@ -169,7 +174,7 @@ Just rmember `multiple Containers` can be spinned up from the `same Image`. But 
 |                                                                                        | Each container is an `isolated instance`, can't access each others resources |
 |                                                                                        |          There are ways to share data between containers if needed           |
 
-## DockerFile Instructions
+## Anatomy of a Dockerfile
 
 Following section looks into how to build docker images by going through each docker command. In the next `Building Images section` we will see an example for building an image of the boilerplate react app.
 
@@ -180,7 +185,16 @@ The section outlines
 - setting `env variables` in docker
 - exposing ports
 
-### From
+### FROM
+
+Where to get the base image from> See Building Images sections for more details. Particularly `Registries` & `Selecting the Right Base Image` sections.
+
+```docker
+# using docker hub
+FROM node:alpine
+# using mcr (see registry section)
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
+```
 
 ### WORKDIR
 
@@ -194,9 +208,11 @@ WORKDIR /app
 
 To copy files to the image. The structure is basically `COPY what where`
 
+If the destination folder does not exist, the folder will be created
+
 `.` signifies the `WORKDIR`
 
-We can only copy from the directory the Dockerfile is in. We can not copy anything outside of it, ie no goin uo folder(s)
+We can only copy from the directory the Dockerfile is in. We can not copy anything outside of it, ie no going up folder(s)
 
 The `COPY` command has 2 forms, one is like regular command. The other form takes an array like this `COPY ["filename", "destination"]`
 
@@ -232,6 +248,12 @@ Second, If you add a zip file, it will be automatically unzipped
 ADD somefile.zip .
 ```
 
+### Excluding Files `.dockerignore`
+
+We use `.dockerignore` to exlude files from the image. The file name is `case-sensitive`
+
+Basically docker's `.gitignore`, whatever you don't want copied put it here. Example `node_modules`. As usual transferring image after copying nude_modules to a remote docker server is a waste. The image size will be huge.
+
 ### RUN
 
 Can run any valid OS commands using this.
@@ -253,15 +275,40 @@ ENV API_URL=http://www.somesite.com/
 ENV API_URL http://www.somesite.com/
 ```
 
-### Excluding Files .dockerignore
+To double check that the `env var` was added to the container environment, we can run one of the following commands
 
-We use `.dockerignore` to exlude files from the image. The file name is `case-sensitive`
+```bash
+# Step 1: Start interactive shell session
+sudo docker run -it dockerized-react-app sh
+# Step 2; Once inside new shell, check env var
+printenv
+# OR
+echo $ENV_VAR_NAME
+```
 
-Basically docker's `.gitignore`, whatever you don't want copied put it here. Example `node_modules`. As usual transferring image after copying nude_modules to a remote docker server is a waste. The image size will be huge.
+### EXPOSE
+
+Used to Expose Ports
+
+We will often have to expose ports. For example, Port 3000 is used to start a deployment server when we run `npm start`
+
+Once we dockerize such apps, the app will run inside the docker container. This port `3000` will be open on the container and not on the host machine.
+
+\*\*`Important:` On the same machine we can have multiple containers running the same image, all these containers will be listening to Port 3000. But the port 3000 of the host is not going to be automatically mapped to these containers.
+
+Later we will see how to map a port on the host to a port on a container. But for now, we will use the `Expose` command to tell what port this container will be listening to
+
+```docker
+EXPOSE 3000
+```
+
+\*\*`Important:` `Expose` command does not automatically publish the port on the host. It's just `a form of documentation` to tell us this container will eventually listen to port 3000. So later when we properly run this app inside a docker container, we know that we should map a port on the host host to port 3000 on the container. Will do that in next section.
 
 ### Managing Users
 
 Also see managings users in linux notes if needed. In order to first create user.
+
+#### Login In as a Particular User in Interactive Shell
 
 ```bash
 # the image used in the example was ubuntu
@@ -270,9 +317,52 @@ Also see managings users in linux notes if needed. In order to first create user
 docker exec -it -u john imageid bash
 ```
 
+#### Creating System User and Primary Group
+
+First let's see how this would be done from the alpine command line. Alpine only has `adduser` command no `useradd` (see linux notes if you need a refresher).
+
+It common est practice in linux to keep the name of the user and their primary group same.
+
+```sh
+# Step 1: Create Group
+addgroup app
+# Step 2: Create User
+# -S = Create a System User
+# -G = Set User's Primary Group
+# First name = group name
+# Second name = user name
+adduser -S -G sadnan sadnan
+
+# Alternatively, doing it in 1 line
+addgroup app && adduser -S -G sadnan sadnan
+
+# check user's groups, if u want
+groups sadnan
+```
+
+Now we will put this in a docker file using the `RUN` command. The set the user using 'USER' command. All follwing commands will be executed as the set user
+
+```docker
+RUN addgroup app && adduser -S -G app app
+USER app
+# All following commands will be executed as the user named 'app'
+```
+
+`Side Note:` After building the image it is a good idea to check if the user has been created as expected. Do this by starting a Shell Session and running the command `whoami` on the terminal. The newly created user will fall in the `others` group. Next if you run 'ls -la' you should also see that the newly created user only has read permissions. This is what we want. If we execute the app as root user, hackers could potentially rewrite everything.
+
+### Defining Entrypoints
+
 ## Building Images
 
-We will now combine the knowledge from previous section and build and example image
+We will now combine the knowledge from previous section and build an example image
+
+We build images using `docker build -switches image-id .` command. The `.` is current folder and needs a dokcerfile in that folder.
+
+### Build Context
+
+When we execute a build command, the docker client sends the contect of the directory, in the above case `.`(current folder), to the docker engine. This is called the build context.
+
+Then the docker engine will execute the instructions of the dockerfile in the folder 1 by 1. The docker engine will not have access to any files outside the directory.
 
 ### Registries
 
@@ -325,34 +415,18 @@ I have to use `sudo` before running docker each time
 See sections above for details on some commands
 
 ```bash
-# switches
-# -i = interactive, brings up an interactive shell
-# for ex if we run just a node image, -i will bring up the node cli
-
-# -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
-# or google pseudo-tty
+# build switches
+# -t means tag, a tag name for our image
 
 # build/rebuild image named first-dockerized-app from current folder
 docker build -t first-dockerized-app .
 
-# Run Shell Sessions Inside Containers
-docker run -it first-dockerized-app sh # alpine
-docker run -it first-dockerized-app bash # ubuntu
+# run switches
+# -i = interactive, brings up an interactive shell/cli when applicable
+# for ex if we run just a node image, -i will bring up the node cli
 
-# get help about image command
-docker image
-
-# list all docker images and details
-docker image ls
-# or
-docker images
-
-
-# run app from any directory using image name, after image creation
-docker run image-name
-
-# pulling image from dockerhub
-docker pull image-id
+# -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
+# or google pseudo-tty
 
 # running an image/app
 # If we don't have the image locally
@@ -368,12 +442,31 @@ docker run image-id
 # a new ubuntu shell will show up
 dock run -it ubuntu
 
+# Run Shell Sessions Inside Containers
+# Super useful to test if everything
+# is working as expected inside the container
+docker run -it first-dockerized-app sh # alpine
+docker run -it first-dockerized-app bash # ubuntu
+
+# get help about image command
+docker image
+
+# list all docker images and details
+docker image ls
+# or
+docker images
+
+# run app from any directory using image name, after image creation
+docker run image-name
+
+# pulling image from dockerhub
+docker pull image-id
+
 # list of running processes/containers
 docker ps
 
 # list all containers (stopped ones too)
 docker ps -a
-
 ```
 
 ## References
