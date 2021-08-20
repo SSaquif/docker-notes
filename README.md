@@ -72,6 +72,7 @@ All notes on Docker
       - [Testing Volume Data is Persistant](#testing-volume-data-is-persistant)
     - [Copying Files/Folders Between HOST & CONTAINERS](#copying-filesfolders-between-host--containers)
     - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
+    - [Hacky Solution 2](#hacky-solution-2)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -921,6 +922,7 @@ docker cp secret.txt <containerID>:/app               # example
 > I posted a [stack overflow question](https://stackoverflow.com/questions/68866419/docker-permission-issues-when-mapping-host-to-container-for-instant-updates-when)
 >
 > `Hacky Solution:` Set `node` as the default user in dockerfile and give it correct permissions, that should work. But I don't like that seems like a security risk
+> `Hacky Solution 2:` [Idea from here](https://forum.codewithmosh.com/t/docker-section-5-working-with-containers-lesson-11-error-and-solution/6380), but will proably stop working if any files outside `/src` changes. Also see section below
 
 We usually want to keep working and see those changes reflected in the containers right away while we are developing projects.
 
@@ -973,6 +975,28 @@ drwxrwxr-x 1047 node     node         36864 Aug 19 19:14 node_modules
 drwxrwxr-x    2 node     node          4096 Aug 19 19:14 public
 drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
 -rw-rw-r--    1 node     node        510089 Aug 19 19:14 yarn.lock
+```
+
+### Hacky Solution 2
+
+Changed the mapping as noted [here](https://forum.codewithmosh.com/t/docker-section-5-working-with-containers-lesson-11-error-and-solution/6380)
+
+Works, but will probably not work if anything outside `/src` folder changes
+
+```bash
+docker run -d -p 4001:3000 --name mapped-container-2 -v $(pwd)/src:/app/src  dockerized-react-app
+# interactive container shell
+sudo docker exec -it <container> sh
+/app $ ls -l
+total 528
+-rw-rw-r--    1 app      app            674 Aug 20 18:40 Dockerfile
+-rw-r--r--    1 app      app           3362 Aug 19 19:14 README.md
+drwxr-xr-x    1 app      app           4096 Aug 20 15:45 data
+drwxr-xr-x    1 app      app           4096 Aug 20 18:55 node_modules
+-rw-rw-r--    1 app      app            824 Aug 19 19:14 package.json
+drwxrwxr-x    2 app      app           4096 Aug 19 19:14 public
+drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
+-rw-rw-r--    1 app      app         510089 Aug 19 19:14 yarn.lock
 ```
 
 ## Quick Commands
