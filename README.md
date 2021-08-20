@@ -53,7 +53,11 @@ All notes on Docker
     - [Fixing Outdated Tags](#fixing-outdated-tags)
   - [Sharing Images](#sharing-images)
   - [Saving and Loading Images](#saving-and-loading-images)
-  - [Working with Containers](#working-with-containers)
+  - [Working with Containers and Volumes](#working-with-containers-and-volumes)
+    - [Starting Containers](#starting-containers)
+    - [Viewing Logs](#viewing-logs)
+    - [Publishing Ports](#publishing-ports)
+    - [Executing Commands on a Running Container `EXEC`](#executing-commands-on-a-running-container-exec)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -710,7 +714,54 @@ docker image tag react-app:2 react-app:latest
 
 [See Vid](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448374)
 
-## Working with Containers
+## Working with Containers and Volumes
+
+This section covers containers in more details. We cover
+
+- Starting and Stopping containers
+- Publishing Ports
+- Viewing Logs
+- Executing commands in containers
+- Removing Containers
+- Persisting data using Volumes
+- Sharing Source Code with containers
+
+### Starting Containers
+
+See quick commands section or previous sections for running in interactive mode (an interactive shell).
+
+```bash
+docker run --help                # get help
+docker run <image>
+docker run -d <image>            # run in the background (detached mode)
+docker run —name <name> <image>  # to give a custom name to container
+```
+
+### Viewing Logs
+
+```bash
+docker logs --help                # get help
+docker logs <containerID>
+docker logs -f <containerID>     # to follow the log
+docker logs —t <containerID>     # to add timestamps
+docker logs —n 10 <containerID>  # to view the last 10 lines
+```
+
+### Publishing Ports
+
+Here we are publishing host's port 3000 to containers port 3000. Afterwords we can go to localhost:3000 as per usual and the app will show up (if it's something like a react/node app that is).
+
+The port numbers can be different
+
+```bash
+docker run —p 3000:3000 <image>    # to publish a port HOST:CONTAINER
+```
+
+Afterwars if you run `docker ps` or `docker container`, we should see this change in the ports section of the relevant container
+
+### Executing Commands on a Running Container `EXEC`
+
+By default the command that runs is specified by `CMD` or `Entrypoint`. But what if we need to run some other command for troubleshooting. Fo example what if I wasnt to check the files
 
 ## Quick Commands
 
