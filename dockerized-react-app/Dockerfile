@@ -1,9 +1,12 @@
 FROM node:14.17.5-alpine3.14
 RUN addgroup app && adduser -S -G app app
 
-# 2 lines added to fix permission issue 
-# when running yarn install
+ 
+# creating folders first to avoid permission issues
 RUN mkdir /app
+# directory to map a volume
+RUN mkdir /app/data
+# changing folder permissions
 RUN chown -R app:app /app
 # Set app as user AFTER setting permissions
 USER app

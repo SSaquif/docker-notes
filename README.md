@@ -57,7 +57,16 @@ All notes on Docker
     - [Starting Containers](#starting-containers)
     - [Viewing Logs](#viewing-logs)
     - [Publishing Ports](#publishing-ports)
-    - [Executing Commands on a Running Container `EXEC`](#executing-commands-on-a-running-container-exec)
+    - [Executing Commands on a Running Container `exec`](#executing-commands-on-a-running-container-exec)
+      - [docker exec VS run](#docker-exec-vs-run)
+    - [Stopping and Restarting Containers](#stopping-and-restarting-containers)
+      - [docker start vs run](#docker-start-vs-run)
+    - [Removing Containers](#removing-containers)
+    - [Container File System](#container-file-system)
+    - [Volumes](#volumes)
+      - [Inspecting volumes](#inspecting-volumes)
+      - [Persisting Data using volumes](#persisting-data-using-volumes)
+      - [Testing Volume Data is Persistant](#testing-volume-data-is-persistant)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -759,9 +768,120 @@ docker run —p 3000:3000 <image>    # to publish a port HOST:CONTAINER
 
 Afterwars if you run `docker ps` or `docker container`, we should see this change in the ports section of the relevant container
 
-### Executing Commands on a Running Container `EXEC`
+### Executing Commands on a Running Container `exec`
 
 By default the command that runs is specified by `CMD` or `Entrypoint`. But what if we need to run some other command for troubleshooting. Fo example what if I wasnt to check the files
+
+```bash
+# see the contents of the working directory
+docker exec <container_id/name> ls
+# start an interactive shell session similar to run
+docker exec -it <container_id/name> sh
+```
+
+#### docker exec VS run
+
+With `run` we start a new container and run a command.
+
+With `exec` we execute a command in a running container
+
+Using exec commands we can run ANY commands in a running container. We can even start an interactive shell (see above) like with run, but if you close the shell the container is still running unlike with `RUN`
+
+### Stopping and Restarting Containers
+
+```bash
+docker stop <container name/id>
+docker start <container name/id>
+```
+
+#### docker start vs run
+
+With docker run we start a `NEW` container
+
+With docker start we start a `STOPPED` container
+
+### Removing Containers
+
+`Side Note:` You can not remove a running container unless you stop it first or use `-f`
+
+```bash
+docker container rm <container name/id> # more verbose
+docker rm <container name/id>           # shortcut
+docker rm -f <container name/id>        # removes running containers
+docker container prune                  # remove all stoped container
+# listing containers
+docker ps -a                            # will list all running & stopped containers
+# find a particular container by name or id
+docker ps -a | grep <container name/id>
+```
+
+### Container File System
+
+Each Container has its own file system that is invisible to other containers.
+
+To test run 2 container from the same image and create a file in one container. Now access the other container (via an interactive shell for example), but the file won't be there
+
+### Volumes
+
+Volume is a storage outside of containers, Can be a directory on the host or somewhere on the clouds.
+
+One of their main uses is to persist data among multiple containers (see section below).
+
+```bash
+# man page for docker volume
+docker volume       # shortcut
+docker volume help
+
+# create volume
+docker volume create <name>
+
+# link volume to a container (see section below)
+# Most time you do it in detached mode -d
+docker run -v <volume-name>:/<path to folder> <image>
+
+# list volume
+docker volume ls
+
+# inspect volume
+docker volume inspect <name>
+
+# remove volumes
+docker volume prune   # remove all unused local volumes
+docker volume rm <name1> <name 2>
+```
+
+#### Inspecting volumes
+
+When inspecting volume (see how above), the driver property tells us where the volume is located. `local` means it's on the host. For creating volumes in cloud platforms you will probably have to read documentation
+
+#### Persisting Data using volumes
+
+The correct way to persist data among multiple containers is uisng volumes
+
+Previously we saw how to link volumes to containers. You need to do this for every container where you want to link the volume
+
+```bash
+# format
+docker run -v <volume-name>:/<path in container> <image>
+
+# practical example
+docker run -v app_data:/app/data dockerized-react-app
+```
+
+1. If a volume with the same name (app_data) does not exist it will be created
+2. The volume will be mapped to the `/app/data` folder in the above example
+3. If the folder does not exist it will be created
+4. This can cause permission issues, if the user is not root
+5. So it's better to create the folder in the docker file
+
+#### Testing Volume Data is Persistant
+
+Once we have inititated a volume as explained in previous sections. We can test it's persistance as follows
+
+1. Run a Container whose Image has a Volume associated with it
+2. Create a new file and write something to it in the mapped volume directory of the container
+3. Remove the container
+4. Spin up a new container and see that stuff that was written still exists within the container
 
 ## Quick Commands
 
