@@ -9,8 +9,11 @@ All notes on Docker
 - [Docker](#docker)
   - [Contents](#contents)
   - [Issues](#issues)
-    - [Replicating The Issue](#replicating-the-issue)
-    - [My Fix for the Issue](#my-fix-for-the-issue)
+    - [Issue 1 (Solved)](#issue-1-solved)
+      - [Replicating The Issue](#replicating-the-issue)
+      - [My Fix for the Issue](#my-fix-for-the-issue)
+  - [Issue 2: Unsolved](#issue-2-unsolved)
+    - [Hacky Solution](#hacky-solution)
   - [Installation](#installation)
   - [Introduction](#introduction)
     - [Why Docker?](#why-docker)
@@ -67,6 +70,8 @@ All notes on Docker
       - [Inspecting volumes](#inspecting-volumes)
       - [Persisting Data using volumes](#persisting-data-using-volumes)
       - [Testing Volume Data is Persistant](#testing-volume-data-is-persistant)
+    - [Copying Files/Folders Between HOST & CONTAINERS](#copying-filesfolders-between-host--containers)
+    - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -74,19 +79,21 @@ All notes on Docker
 
 ## Issues
 
+### Issue 1 (Solved)
+
 Before I continue I want to list out 1 issue. It could be the result of using ubuntu according to a stack overflow answer.
 
 The issue is right now if I add `node_modules/` folder to the dockerignore file and then create and set a new user for my image in the dockerfile. The new user does not have the permission to make the `node_modules` folder and the process fails
 
-For now I am not adding `node_modules/` to the dockerignore file.
+Here are some stack overflow links I have read and found somwwaht useful.
 
-I have not been able to figure out how to give the user correct permissions. Here are some stack overflow links I have read.
+My fix which you can see later is create the workdir and new user first and then change the owner of the workdir while still root user, And then finally set the user to be the newly created user
 
 - [This one says it might be due to ubuntu but no solution given](https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat)
 - [This one has solution using npm and not yarn](https://stackoverflow.com/questions/55926705/docker-error-eacces-permission-denied-mkdir-project-node-modules-cache)
 - [Open Issue on similar topic](https://github.com/nodejs/docker-node/issues/740)
 
-### Replicating The Issue
+#### Replicating The Issue
 
 The state of my `Dockerfile` & `.dockerignore` files to replicate the error
 
@@ -108,7 +115,7 @@ EXPOSE 3000
 CMD ["yarn", "start"]
 ```
 
-### My Fix for the Issue
+#### My Fix for the Issue
 
 ```docker
 FROM node:14.17.5-alpine3.14
@@ -129,6 +136,14 @@ EXPOSE 3000
 CMD ["yarn", "start"]
 ```
 
+## Issue 2: Unsolved
+
+See section [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
+
+### Hacky Solution
+
+Set `node` as the default user in dockerfile and give it correct permissions, that should work.
+
 ## Installation
 
 Use goolge for instructions.
@@ -139,8 +154,8 @@ Use goolge for instructions.
 
 Often things will run in one machine but not another, why?
 
-    1. Missing file(s)
-    2. Software/Dependency Version Mismatches
+1. Missing file(s)
+2. Software/Dependency Version Mismatches
 
 With `Docker` we can package up our entire Applications (with all the correct version for each dependency) and run it on any machine that has docker.
 
@@ -183,11 +198,11 @@ Docker uses this file to package up our app into an `image`
 
 The image contains everything our app needs to run, ex
 
-    1. A cut-down OS
-    2. A runtime env (Node/Python etc)
-    3. Application files
-    4. 3rd party libraries
-    5. Environmental Variables
+1. A cut-down OS
+2. A runtime env (Node/Python etc)
+3. Application files
+4. 3rd party libraries
+5. Environmental Variables
 
 ### Dockerfile Example
 
@@ -218,9 +233,9 @@ CMD node index.js
    - This basically specifies where the image will find the files
    - ie the working directory for the image to use
 
-4. Line 4: `CMD node index.js `
+4. Line 4: `CMD node index.js`
    - Finally this line tells docker how to run the app
-   - If we omitted line 3, we would have to do `CMD node /app/index.js `
+   - If we omitted line 3, we would have to do `CMD node /app/index.js`
 
 ### Running The App using Docker
 
@@ -742,8 +757,8 @@ See quick commands section or previous sections for running in interactive mode 
 ```bash
 docker run --help                # get help
 docker run <image>
-docker run -d <image>            # run in the background (detached mode)
-docker run —name <name> <image>  # to give a custom name to container
+docker run -d <image>             # run in the background (detached mode)
+docker run --name <name> <image>  # to give a custom name to container
 ```
 
 ### Viewing Logs
@@ -752,8 +767,8 @@ docker run —name <name> <image>  # to give a custom name to container
 docker logs --help                # get help
 docker logs <containerID>
 docker logs -f <containerID>     # to follow the log
-docker logs —t <containerID>     # to add timestamps
-docker logs —n 10 <containerID>  # to view the last 10 lines
+docker logs -t <containerID>     # to add timestamps
+docker logs -n 10 <containerID>  # to view the last 10 lines
 ```
 
 ### Publishing Ports
@@ -854,6 +869,8 @@ docker volume rm <name1> <name 2>
 
 When inspecting volume (see how above), the driver property tells us where the volume is located. `local` means it's on the host. For creating volumes in cloud platforms you will probably have to read documentation
 
+[Video](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448945)
+
 #### Persisting Data using volumes
 
 The correct way to persist data among multiple containers is uisng volumes
@@ -882,6 +899,81 @@ Once we have inititated a volume as explained in previous sections. We can test 
 2. Create a new file and write something to it in the mapped volume directory of the container
 3. Remove the container
 4. Spin up a new container and see that stuff that was written still exists within the container
+
+### Copying Files/Folders Between HOST & CONTAINERS
+
+Often times we want to copy files from container to host or vice versa. Often done to check logs. Works for both files and folders according to doumentation.
+
+```bash
+# copy files
+# container to host
+docker cp <containerID>:<file path> <host directory>  # format
+docker cp <containerID>:/app/log.txt .                # example
+# host to container
+docker cp <path in host> <containerID>:<file path>    # format
+docker cp secret.txt <containerID>:/app               # example
+```
+
+### `Important` Publishing Changes & Sharing Source Code with Containers
+
+> `Important:` This is labelled as Issue 2 on top This did not work as expected for me. When mapping host to container, the owner of the files of the mapped container becomes `node` instead of `app`. This creates access issues and the website breaks.
+>
+> I posted a [stack overflow question](https://stackoverflow.com/questions/68866419/docker-permission-issues-when-mapping-host-to-container-for-instant-updates-when)
+>
+> `Hacky Solution:` Set `node` as the default user in dockerfile and give it correct permissions, that should work. But I don't like that seems like a security risk
+
+We usually want to keep working and see those changes reflected in the containers right away while we are developing projects.
+
+So how to publish changes we make to code to containers?
+
+1. In Production
+
+   - Always build a new IMAGE
+   - Tag it properly & deploy
+   - Then you spin off containers from it
+   - More about this in the deploy section
+
+2. In Development
+   - Unlike in production, we want things done faster
+   - In order to not consume so much time building again and gain
+   - We can create a mapping between host and container
+   - the syntax is very similar to mapping a volume from host to container
+
+```bash
+docker run -v <app path in host>:<Image Workdir> <image>
+# can use pwd as a variable if pwd == app folder in
+docker run -v $(pwd):/app <image>
+
+# to test apps and mapping right away,
+# good idea to map the container and host ports
+# running in detached mode
+docker run -d -p 5000:3000 -v $(pwd):/app <image>
+```
+
+Here are the commands I ran. The mapping cause permissions issues. So this does not work as expected.
+
+```bash
+# This works as expected
+# create container with port mapping
+# but I don't map host to container
+docker run -d -p 5002:3000 --name not-mapped-container dockerized-react-app
+
+# Does not work as expected
+# Map host to container for instant updates
+docker run -d -p 8080:3000 --name mapped-container -v $(pwd):/app  dockerized-react-app
+# run interactive shell again
+sudo docker exec -it <container_id/name> sh
+# list the files again but now the owner is node
+/app $ ls -l
+total 556
+-rw-rw-r--    1 node     node           664 Aug 20 15:45 Dockerfile
+-rw-r--r--    1 node     node          3362 Aug 19 19:14 README.md
+drwxrwxr-x 1047 node     node         36864 Aug 19 19:14 node_modules
+-rw-rw-r--    1 node     node           824 Aug 19 19:14 package.json
+drwxrwxr-x    2 node     node          4096 Aug 19 19:14 public
+drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
+-rw-rw-r--    1 node     node        510089 Aug 19 19:14 yarn.lock
+```
 
 ## Quick Commands
 
@@ -939,10 +1031,15 @@ docker pull image-id
 
 # list of running processes/containers
 docker ps
-
 # list all containers
 docker ps -a #(stopped ones too)
 docker container ls
+
+# inspect container logs
+# avaialbale switches -t, -f, -n
+# use docker logs --help for details
+docker logs <container>
+
 
 # docker remove container
 # -f = force
@@ -963,6 +1060,10 @@ docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
 # help regarding image and container commands
 docker image help
 docker container help
+
+# copy files
+docker cp <containerID>:/app/log.txt .   # container to host
+docker cp secret.txt <containerID>:/app  # host to container
 ```
 
 ## References

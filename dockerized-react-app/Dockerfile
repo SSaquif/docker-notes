@@ -1,7 +1,5 @@
 FROM node:14.17.5-alpine3.14
-RUN addgroup app && adduser -S -G app app
-
- 
+RUN addgroup app && adduser -S -G app app 
 # creating folders first to avoid permission issues
 RUN mkdir /app
 # directory to map a volume
@@ -14,7 +12,7 @@ WORKDIR /app
 # Copy and install separtely to speed up builds
 COPY --chown=app:app package*.json yarn.lock ./ 
 RUN yarn install
-# Give owner rights to the current user (probably unnecessary)
+# Copy (& also give owner rights to the current user probably unnecessary)
 COPY --chown=app:app . .
 # the env var is unnecessary, just for testing
 ENV API_URL=http://api.myapp.com/
