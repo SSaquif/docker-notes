@@ -46,9 +46,14 @@ All notes on Docker
       - [ENTRYPOINT VS CMD](#entrypoint-vs-cmd)
   - [Speeding Up Builds](#speeding-up-builds)
   - [Removing Images and Containers](#removing-images-and-containers)
-  - [Tagging Images](#tagging-images)
+  - [Image Tags and their Importance](#image-tags-and-their-importance)
+    - [Creating Tags during Build Phase](#creating-tags-during-build-phase)
+    - [Remove Images by Tags](#remove-images-by-tags)
+    - [Tagging Image After Building](#tagging-image-after-building)
+    - [Fixing Outdated Tags](#fixing-outdated-tags)
   - [Sharing Images](#sharing-images)
   - [Saving and Loading Images](#saving-and-loading-images)
+  - [Working with Containers](#working-with-containers)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -650,11 +655,62 @@ docker image rm -f <image_id>
 docker image prune
 ```
 
-## Tagging Images
+## Image Tags and their Importance
+
+[See vid](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448369)
+
+By default docker will associate the `latest` tag for each repository. This does not necessarily mean it's actually the latest version of image. If we don't update the tags properly, latest might be out of date.
+
+For developemnt `latest` is fine but not in production or staging. So it's important to give our own tags.
+
+### Creating Tags during Build Phase
+
+```bash
+# tagging an image while building it
+# tag is 1, 3.1.5, buster (all are valid)
+docker build -t react-app:1 .
+docker build -t react-app:3.1.5 .
+docker build -t react-app:buster .
+```
+
+After building with a tag we can see 2 images with same id but different tags
+
+![same id diff tags](images/tags_1.png)
+
+### Remove Images by Tags
+
+This will remove the image with tag 1 altogether
+
+```docker
+docker image remove react-app:1
+```
+
+### Tagging Image After Building
+
+Will create a new image from the altest tag, they will both share the same image id, just like before
+
+```docker
+docker image tag react-app:latest react-app:1
+```
+
+### Fixing Outdated Tags
+
+If we change the code now and build a new image with new tag. This new image will have a new image id. This image is now the latest but the one with latest tag will still point to the older image as denoted by the id (ie it will still have the old id). To fix this we can do
+
+```bash
+# updating the latest tag, id will be updated
+docker image tag react-app:2 react-app:latest
+```
 
 ## Sharing Images
 
+[See video as we have to upload to dockerhub](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448365)
+
 ## Saving and Loading Images
+
+[See Vid](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31448374)
+
+## Working with Containers
 
 ## Quick Commands
 
@@ -719,13 +775,23 @@ docker container ls
 
 # docker remove container
 # -f = force
+# dont have to use full id,
+# first couple of letters are fine as long as it is unique
 docker container rm -f <container_id>
+# remove multiple
+docker container rm -f <container_id1> <container_id2>
 # remove all stopped containers
 docker container prune
 # docker remove image
 # -f = force
 # won't work even with -f, if image is used by some container
-docker image rm -f <image_id>
+docker image rm -f <image_id/name>
+# remove multiple
+docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
+
+# help regarding image and container commands
+docker image help
+docker container help
 ```
 
 ## References
