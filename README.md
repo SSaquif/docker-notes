@@ -15,6 +15,7 @@ All notes on Docker
   - [Issue 2: Unsolved](#issue-2-unsolved)
     - [Hacky Solution](#hacky-solution)
   - [Installation](#installation)
+  - [Give non root User root Permissions for docker](#give-non-root-user-root-permissions-for-docker)
   - [Introduction](#introduction)
     - [Why Docker?](#why-docker)
   - [Containers vs Virtual Machines](#containers-vs-virtual-machines)
@@ -73,6 +74,7 @@ All notes on Docker
     - [Copying Files/Folders Between HOST & CONTAINERS](#copying-filesfolders-between-host--containers)
     - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
     - [Hacky Solution 2](#hacky-solution-2)
+  - [Quick Cleanup Commands](#quick-cleanup-commands)
   - [Quick Commands](#quick-commands)
   - [References](#references)
 
@@ -147,7 +149,13 @@ Set `node` as the default user in dockerfile and give it correct permissions, th
 
 ## Installation
 
-Use goolge for instructions.
+Use google for instructions.
+
+In addition, in order to run Multi container applications, we need `Docker Compose`. So [install that as well](https://docs.docker.com/compose/install/)
+
+## Give non root User root Permissions for docker
+
+This way you don't have to type in sudo each time. [link](https://docs.docker.com/engine/install/linux-postinstall/)
 
 ## Introduction
 
@@ -999,6 +1007,21 @@ drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
 -rw-rw-r--    1 app      app         510089 Aug 19 19:14 yarn.lock
 ```
 
+## Quick Cleanup Commands
+
+```bash
+# remove all containers & images (cobination of 2 commands)
+# images can't be removed if a container from that image exists
+# ls with switch -q just lists all container/image ids only
+# switch -a will list hidden containers as well
+# rm with -f will force remove running containers
+# we pass that to docker image rm as and argument using $()
+# $() is basically used when we want the result of the command inside
+docker container rm -f $(docker container ls -aq)
+docker image rm -f $(docker image ls -aq)
+
+```
+
 ## Quick Commands
 
 I have to use `sudo` before running docker each time
@@ -1074,12 +1097,17 @@ docker container rm -f <container_id>
 docker container rm -f <container_id1> <container_id2>
 # remove all stopped containers
 docker container prune
+
 # docker remove image
 # -f = force
 # won't work even with -f, if image is used by some container
 docker image rm -f <image_id/name>
 # remove multiple
 docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
+
+# REMOVE ALL containers & images (combination of 2 commands)
+docker container rm -f $(docker container ls -aq)
+docker image rm -f $(docker image ls -aq)
 
 # help regarding image and container commands
 docker image help
