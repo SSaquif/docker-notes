@@ -1047,7 +1047,7 @@ docker build -t first-dockerized-app .
 # -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
 # or google pseudo-tty
 
-# running an image/app
+# running an image/app = spinning off a container
 # If we don't have the image locally
 # It will try and automatically pull one with same id, if that exists
 docker run image-id
