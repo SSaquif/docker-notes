@@ -1,24 +1,39 @@
 # Docker: Part 2
 
-Running Multi-Container Apps via Docker and Deployment to Digital Ocean
+Running Multi-Container Apps via Docker
 
-## Other Section(s)
+## Other Note(s)
 
 - [Part 1](https://github.com/SSaquif/docker-notes/blob/master/part-1.md): Docker Fundamentals using a single react app as example
+- [Part 3](https://github.com/SSaquif/docker-notes/blob/master/part-3.md): Covers Deployment
 
 ## Contents
 
 <!-- toc -->
 
 - [Docker: Part 2](#docker-part-2)
-  - [Other Section(s)](#other-sections)
+  - [Other Note(s)](#other-notes)
   - [Contents](#contents)
   - [Our Example App](#our-example-app)
   - [Advantage of Docker for Such Apps](#advantage-of-docker-for-such-apps)
   - [`yml` Files](#yml-files)
     - [`yml` vs `json`](#yml-vs-json)
     - [Which One to Pick?](#which-one-to-pick)
-  - [Quick Comands](#quick-comands)
+  - [`docker-conmpose.yml` file breakdown](#docker-conmposeyml-file-breakdown)
+    - [version](#version)
+    - [services](#services)
+    - [frontend](#frontend)
+    - [backend](#backend)
+    - [database](#database)
+    - [volume](#volume)
+  - [Building Images](#building-images)
+  - [Starting & Stopping the Application](#starting--stopping-the-application)
+  - [Docker Network](#docker-network)
+  - [Viewing Logs](#viewing-logs)
+  - [Publishing Chnages](#publishing-chnages)
+  - [Migrating the Database](#migrating-the-database)
+  - [Running Tests](#running-tests)
+  - [Quick Commands](#quick-commands)
 
 <!-- tocstop -->
 
@@ -104,7 +119,35 @@ author:
 
 4. This makes `yml` more suitable for configuration files
 
-## Quick Comands
+## `docker-conmpose.yml` file breakdown
+
+### version
+
+### services
+
+### frontend
+
+### backend
+
+### database
+
+### volume
+
+## Building Images
+
+## Starting & Stopping the Application
+
+## Docker Network
+
+## Viewing Logs
+
+## Publishing Chnages
+
+## Migrating the Database
+
+## Running Tests
+
+## Quick Commands
 
 ```bash
 # Starting a Multi Container App

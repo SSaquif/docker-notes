@@ -4,7 +4,8 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
 
 ## Other Note(s)
 
-- [Part 2](https://github.com/SSaquif/docker-notes/blob/master/part-2.md): Running Multi Container Apps. Uses a full stack Mern App as example. Also covers Deployment (Perhaps Part 3)
+- [Part 2](https://github.com/SSaquif/docker-notes/blob/master/part-2.md): Running Multi Container Apps. Uses a full stack Mern App as example.
+- [Part 3](https://github.com/SSaquif/docker-notes/blob/master/part-3.md): Covers Deployment
 
 ## Contents
 
