@@ -2,7 +2,7 @@
 
 Docker Fundamentals & Running Simple Single Container Apps via Docker
 
-## Other Section(s)
+## Other Note(s)
 
 - [Part 2](https://github.com/SSaquif/docker-notes/blob/master/part-2.md): Running Multi Container Apps. Uses a full stack Mern App as example. Also covers Deployment (Perhaps Part 3)
 
@@ -11,8 +11,9 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
 <!-- toc -->
 
 - [Docker: Part 1](#docker-part-1)
-  - [Other Section(s)](#other-sections)
+  - [Other Note(s)](#other-notes)
   - [Contents](#contents)
+  - [Quick Commands](#quick-commands)
   - [Issues](#issues)
     - [Issue 1 (Solved)](#issue-1-solved)
       - [Replicating The Issue](#replicating-the-issue)
@@ -20,7 +21,7 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
   - [Issue 2: Unsolved](#issue-2-unsolved)
     - [Hacky Solution](#hacky-solution)
   - [Installation](#installation)
-  - [Give non root User root Permissions for docker](#give-non-root-user-root-permissions-for-docker)
+  - [Using Docker Without `sudo`](#using-docker-without-sudo)
   - [Introduction](#introduction)
     - [Why Docker?](#why-docker)
   - [Containers vs Virtual Machines](#containers-vs-virtual-machines)
@@ -80,10 +81,103 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
     - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
     - [Hacky Solution 2](#hacky-solution-2)
   - [Quick Cleanup Commands](#quick-cleanup-commands)
-  - [Quick Commands](#quick-commands)
   - [References](#references)
 
 <!-- tocstop -->
+
+## Quick Commands
+
+See section(s) below for details on most commands
+
+```bash
+# build switches
+# -t means tag, a tag name for our image
+
+# build/rebuild image named first-dockerized-app from current folder
+docker build -t first-dockerized-app .
+
+# run switches
+# -i = interactive, brings up an interactive shell/cli when applicable
+# for ex if we run just a node image, -i will bring up the node cli
+
+# -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
+# or google pseudo-tty
+
+# running an image/app = spinning off a container
+# If we don't have the image locally
+# It will try and automatically pull one with same id, if that exists
+docker run image-id
+
+# start container in interactive mode using -i
+# -t switch might be unnecessary
+# according to man docker run
+# -t means to allocate a pseudo-tty (pseudo terminal, see linux notes)
+# ubuntu is the image-id
+# this will run an ubuntu image
+# a new ubuntu shell will show up
+dock run -it ubuntu
+
+# Run Shell Sessions Inside Containers
+# Super useful to test if everything
+# is working as expected inside the container
+docker run -it first-dockerized-app sh # alpine
+docker run -it first-dockerized-app bash # ubuntu
+
+# get help about image command
+docker image
+
+# list all docker images and details
+docker image ls
+# or
+docker images
+
+# run app from any directory using image name, after image creation
+docker run image-name
+
+# pulling image from dockerhub
+docker pull image-id
+
+# list of running processes/containers
+docker ps
+# list all containers
+docker ps -a #(stopped ones too)
+docker container ls
+
+# inspect container logs
+# avaialbale switches -t, -f, -n
+# use docker logs --help for details
+docker logs <container>
+
+
+# docker remove container
+# -f = force
+# dont have to use full id,
+# first couple of letters are fine as long as it is unique
+docker container rm -f <container_id>
+# remove multiple
+docker container rm -f <container_id1> <container_id2>
+# remove all stopped containers
+docker container prune
+
+# docker remove image
+# -f = force
+# won't work even with -f, if image is used by some container
+docker image rm -f <image_id/name>
+# remove multiple
+docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
+
+# REMOVE ALL containers & images (combination of 2 commands)
+docker container rm -f $(docker container ls -aq)
+docker image rm -f $(docker image ls -aq)
+
+# help regarding image and container commands
+docker image help
+docker container help
+
+# copy files
+docker cp <containerID>:/app/log.txt .   # container to host
+docker cp secret.txt <containerID>:/app  # host to container
+```
 
 ## Issues
 
@@ -158,7 +252,7 @@ Use google for instructions.
 
 In addition, in order to run Multi container applications, we need `Docker Compose`. So [install that as well](https://docs.docker.com/compose/install/)
 
-## Give non root User root Permissions for docker
+## Using Docker Without `sudo`
 
 This way you don't have to type in sudo each time. [link](https://docs.docker.com/engine/install/linux-postinstall/)
 
@@ -1025,102 +1119,6 @@ drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
 docker container rm -f $(docker container ls -aq)
 docker image rm -f $(docker image ls -aq)
 
-```
-
-## Quick Commands
-
-I have to use `sudo` before running docker each time
-
-See sections above for details on some commands
-
-```bash
-# build switches
-# -t means tag, a tag name for our image
-
-# build/rebuild image named first-dockerized-app from current folder
-docker build -t first-dockerized-app .
-
-# run switches
-# -i = interactive, brings up an interactive shell/cli when applicable
-# for ex if we run just a node image, -i will bring up the node cli
-
-# -t = means to allocate a pseudo-tty (pseudo terminal, see linux notes)
-# or google pseudo-tty
-
-# running an image/app = spinning off a container
-# If we don't have the image locally
-# It will try and automatically pull one with same id, if that exists
-docker run image-id
-
-# start container in interactive mode using -i
-# -t switch might be unnecessary
-# according to man docker run
-# -t means to allocate a pseudo-tty (pseudo terminal, see linux notes)
-# ubuntu is the image-id
-# this will run an ubuntu image
-# a new ubuntu shell will show up
-dock run -it ubuntu
-
-# Run Shell Sessions Inside Containers
-# Super useful to test if everything
-# is working as expected inside the container
-docker run -it first-dockerized-app sh # alpine
-docker run -it first-dockerized-app bash # ubuntu
-
-# get help about image command
-docker image
-
-# list all docker images and details
-docker image ls
-# or
-docker images
-
-# run app from any directory using image name, after image creation
-docker run image-name
-
-# pulling image from dockerhub
-docker pull image-id
-
-# list of running processes/containers
-docker ps
-# list all containers
-docker ps -a #(stopped ones too)
-docker container ls
-
-# inspect container logs
-# avaialbale switches -t, -f, -n
-# use docker logs --help for details
-docker logs <container>
-
-
-# docker remove container
-# -f = force
-# dont have to use full id,
-# first couple of letters are fine as long as it is unique
-docker container rm -f <container_id>
-# remove multiple
-docker container rm -f <container_id1> <container_id2>
-# remove all stopped containers
-docker container prune
-
-# docker remove image
-# -f = force
-# won't work even with -f, if image is used by some container
-docker image rm -f <image_id/name>
-# remove multiple
-docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
-
-# REMOVE ALL containers & images (combination of 2 commands)
-docker container rm -f $(docker container ls -aq)
-docker image rm -f $(docker image ls -aq)
-
-# help regarding image and container commands
-docker image help
-docker container help
-
-# copy files
-docker cp <containerID>:/app/log.txt .   # container to host
-docker cp secret.txt <containerID>:/app  # host to container
 ```
 
 ## References
