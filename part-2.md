@@ -15,7 +15,10 @@ Running Multi-Container Apps via Docker and Deployment to Digital Ocean
   - [Contents](#contents)
   - [Our Example App](#our-example-app)
   - [Advantage of Docker for Such Apps](#advantage-of-docker-for-such-apps)
-  - [Quick comands](#quick-comands)
+  - [`yml` Files](#yml-files)
+    - [`yml` vs `json`](#yml-vs-json)
+    - [Which One to Pick?](#which-one-to-pick)
+  - [Quick Comands](#quick-comands)
 
 <!-- tocstop -->
 
@@ -45,7 +48,63 @@ With `docker` we use `docker-compose` for such applications and if everything is
 docker-compose up
 ```
 
-## Quick comands
+## `yml` Files
+
+docker-compose is an `yml` file.
+
+`yml` and `yaml` are both valid extensios. They are the same.
+
+### `yml` vs `json`
+
+To understand `yml` better, it's best to compare with `json` files.
+
+```json
+{
+  "name": "Greatest App Ever",
+  "price": 149,
+  "is_published": true,
+  "tags": ["software", "devops"],
+  "author": {
+    "first_name": "Sadnan",
+    "last_name": "Saquif"
+  }
+}
+```
+
+```yml
+---
+name: Greatest App Ever
+price: 149
+is_published: true
+tags:
+  - software
+  - devops
+author:
+  first_name: Sadnan
+  last_name: Saquif
+```
+
+| yml                                                                   | json                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------- |
+| File starts with ---                                                  | everything goes inside braces                        |
+| Indentation matters (idea comes from python)                          | Indentation doesn't matter                           |
+| comma not reuired at eol                                              | comma reuired at eol (except last property)          |
+| No need to double quotations ""                                       | Strings go in "", no need of quotations for numbers  |
+| However, that means no way to distinguish between strings and numbers | "" allows to distinguish between strings and numbers |
+| Arrays are represented as indented lists                              | Arrays are similar to js arrays                      |
+| Objects are represented with indented properties                      | Objects are similar to js objects                    |
+
+### Which One to Pick?
+
+1. yml takes longer to parse so it's slower. This is due to not being able to distinguish between strings and numbers easily
+
+2. `json` is more suitable for sharing data
+
+3. `yml` is a bit easier to read. As hierarchial data is indented
+
+4. This makes `yml` more suitable for configuration files
+
+## Quick Comands
 
 ```bash
 # Starting a Multi Container App
