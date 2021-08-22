@@ -24,6 +24,7 @@ Running Multi-Container Apps via Docker
     - [Example File](#example-file)
     - [version](#version)
     - [services](#services)
+    - [volume](#volume)
     - [Keywords Breakdown Table](#keywords-breakdown-table)
   - [Docker and Mongo Database](#docker-and-mongo-database)
     - [Docker & MongoDB Atlas](#docker--mongodb-atlas)
@@ -42,7 +43,7 @@ Running Multi-Container Apps via Docker
 
 The example app we will be suing is a fullstack MERN app:
 
-`TODO & Side Note:` App is provide in the course, will update it to my one of own apps later
+`TODO & Side Note:` App is provided in mosh's course, will update it to one of my own apps later
 
 1. Frontend React
 2. Backend Node and Express
@@ -100,15 +101,15 @@ author:
   last_name: Saquif
 ```
 
-| yml                                                                   | json                                                 |
-| --------------------------------------------------------------------- | ---------------------------------------------------- |
-| File starts with ---                                                  | everything goes inside braces                        |
-| Indentation matters (idea comes from python)                          | Indentation doesn't matter                           |
-| comma not reuired at eol                                              | comma reuired at eol (except last property)          |
-| No need to double quotations "" (see exceptions for version)          | Strings go in "", no need of quotations for numbers  |
-| However, that means no way to distinguish between strings and numbers | "" allows to distinguish between strings and numbers |
-| Arrays are represented as indented lists                              | Arrays are similar to js arrays                      |
-| Objects are represented with indented properties                      | Objects are similar to js objects                    |
+| yml                                                                   | json                                                                 |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| File starts with ---                                                  | everything goes inside braces                                        |
+| Indentation matters (idea comes from python)                          | Indentation doesn't matter                                           |
+| comma not reuired at eol                                              | comma reuired at eol (except last property)                          |
+| No need to double quotations "" (see exceptions for version)          | Strings go in double quotes `""`, no need of quotations for numbers  |
+| However, that means no way to distinguish between strings and numbers | double quotes `""` allows to distinguish between strings and numbers |
+| Arrays are represented as indented lists                              | Arrays are similar to js arrays                                      |
+| Objects are represented with indented properties                      | Objects are similar to js objects                                    |
 
 ### Which One to Pick?
 
@@ -186,15 +187,17 @@ This are basically the different parts of our app. We use the names `frontend, b
 
 > `Important`: Each service will have it's own dockerfile. Little trickier for services like DB. We pull an image for dockerhub for the DB. See the relevant Database sections below.
 
+### volume
+
 ### Keywords Breakdown Table
 
-| Keywords | Description                                              |
-| -------- | -------------------------------------------------------- |
-| version  | [see above]()                                            |
-| services | [see above]()                                            |
-| ports    | used to map port of host to container, see example above |
-| build    | path to folder of where the docker file is located       |
-| volume   |                                                          |
+| Keywords | Description                                                                         |
+| -------- | ----------------------------------------------------------------------------------- |
+| version  | [see above](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#version)  |
+| services | [see above](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#services) |
+| ports    | used to map port of host to container                                               |
+| build    | path to folder of where the docker file is located                                  |
+| volume   | [see above](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#volume)   |
 
 ## Docker and Mongo Database
 
@@ -202,7 +205,7 @@ This are basically the different parts of our app. We use the names `frontend, b
 
 `TODO` Make it its own file if section gets too long
 
-Also see section [Migrating the Database]()
+Also see section [Migrating the Database](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#migrating-the-database)
 
 ### Docker & MongoDB Atlas
 
