@@ -19,13 +19,14 @@ Running Multi-Container Apps via Docker
   - [`yml` Files](#yml-files)
     - [`yml` vs `json`](#yml-vs-json)
     - [Which One to Pick?](#which-one-to-pick)
-  - [`docker-conmpose.yml` file breakdown](#docker-conmposeyml-file-breakdown)
+  - [Useful Refrences for `docker-compose.yml` Compose File](#useful-refrences-for-docker-composeyml-compose-file)
+  - [`docker-compose.yml` file breakdown](#docker-composeyml-file-breakdown)
+    - [Example File](#example-file)
     - [version](#version)
     - [services](#services)
-    - [frontend](#frontend)
-    - [backend](#backend)
-    - [database](#database)
-    - [volume](#volume)
+    - [Keywords Breakdown Table](#keywords-breakdown-table)
+  - [Docker and Mongo Database](#docker-and-mongo-database)
+    - [Docker & MongoDB Atlas](#docker--mongodb-atlas)
   - [Building Images](#building-images)
   - [Starting & Stopping the Application](#starting--stopping-the-application)
   - [Docker Network](#docker-network)
@@ -104,7 +105,7 @@ author:
 | File starts with ---                                                  | everything goes inside braces                        |
 | Indentation matters (idea comes from python)                          | Indentation doesn't matter                           |
 | comma not reuired at eol                                              | comma reuired at eol (except last property)          |
-| No need to double quotations ""                                       | Strings go in "", no need of quotations for numbers  |
+| No need to double quotations "" (see exceptions for version)          | Strings go in "", no need of quotations for numbers  |
 | However, that means no way to distinguish between strings and numbers | "" allows to distinguish between strings and numbers |
 | Arrays are represented as indented lists                              | Arrays are similar to js arrays                      |
 | Objects are represented with indented properties                      | Objects are similar to js objects                    |
@@ -119,19 +120,95 @@ author:
 
 4. This makes `yml` more suitable for configuration files
 
-## `docker-conmpose.yml` file breakdown
+## Useful Refrences for `docker-compose.yml` Compose File
+
+> `Important:` At the time of writing, version 3 of the compose file is the latest.
+
+- [Link to docs for v3](https://docs.docker.com/compose/compose-file/compose-file-v3/). Note that info about different properties used in the file can be found on the right hand side bar
+- [Use variables form `.env` file](https://docs.docker.com/compose/env-file/)
+- [Variable Substitution](https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution)
+
+## `docker-compose.yml` file breakdown
+
+See folder `3-vidly` for actual example file
+
+In this file we define the building block/services of our applications
+
+This `docker-compose.yml` file does not seem it needs to start with ---
+
+### Example File
+
+```yml
+version: "3.8"
+
+services:
+  frontend: # service name, can be anything see section below
+    depends_on:
+      - backend
+    build: ./frontend # folder where the dockerfile is located
+    ports: # mapping port of host:container
+      - 3000:3000
+
+  backend:
+    depends_on:
+      - db
+    build: ./backend
+    ports:
+      - 3001:3001
+    environment:
+      DB_URL: mongodb://db/vidly
+    command: ./docker-entrypoint.sh
+
+  db:
+    image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile
+    ports:
+      - 27017:27017
+    volumes:
+      - vidly:/data/db
+
+volumes:
+  vidly:
+```
 
 ### version
 
+The version depends on which Docker Engine we are using. Check the [Compatibility Matrix](https://docs.docker.com/compose/compose-file/compose-versioning/)
+
+Also this is the only property whose value needs to be in `""`
+
+```yml
+version: "3.8"
+```
+
 ### services
 
-### frontend
+This are basically the different parts of our app. We use the names `frontend, backend and db`. But the service names are arbitary. Another common convention is call frontend `web` and backend `api`
 
-### backend
+> `Important`: Each service will have it's own dockerfile. Little trickier for services like DB. We pull an image for dockerhub for the DB. See the relevant Database sections below.
 
-### database
+### Keywords Breakdown Table
 
-### volume
+| Keywords | Description                                              |
+| -------- | -------------------------------------------------------- |
+| version  | [see above]()                                            |
+| services | [see above]()                                            |
+| ports    | used to map port of host to container, see example above |
+| build    | path to folder of where the docker file is located       |
+| volume   |                                                          |
+
+## Docker and Mongo Database
+
+`TODO` Put his section in the mongo db notes as well
+
+`TODO` Make it its own file if section gets too long
+
+Also see section [Migrating the Database]()
+
+### Docker & MongoDB Atlas
+
+Need to figure this out, will probably have use [variables from `.env files`](https://docs.docker.com/compose/env-file/)
+
+`TODO` Put his section in the mongo db notes as well
 
 ## Building Images
 

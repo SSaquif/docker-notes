@@ -1,1 +1,15 @@
-version:
+version: "3.8"
+
+services:
+  frontend:
+    build: ./frontend # folder where the dockerfile is located
+    ports:
+      - 3000:3000 # mapping port of host:container
+  backend:
+    build: ./backend
+    ports:
+      - 4000:4000 # mapping port of host:container
+  db:
+    image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile
+    ports:
+      - 27071:27071 # this is the default port on which mongo db listens on

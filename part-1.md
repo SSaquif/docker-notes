@@ -91,6 +91,11 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
 See section(s) below for details on most commands
 
 ```bash
+# docker version and info
+# need to use sudo to get info about docker server
+# otherwise only get info about docker client
+sudo docker version
+
 # build switches
 # -t means tag, a tag name for our image
 
