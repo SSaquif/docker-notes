@@ -45,6 +45,8 @@ The example app we will be suing is a fullstack MERN app:
 
 `TODO & Side Note:` App is provided in mosh's course, will update it to one of my own apps later
 
+> I will probably have to change the folder owners in the actual individual FE & BE dockerfile
+
 1. Frontend React
 2. Backend Node and Express
 3. With a Mongo Database
@@ -125,6 +127,8 @@ author:
 
 > `Important:` At the time of writing, version 3 of the compose file is the latest.
 
+This Links are also refrenced below
+
 - [Link to docs for v3](https://docs.docker.com/compose/compose-file/compose-file-v3/). Note that info about different properties used in the file can be found on the right hand side bar
 - [Use variables form `.env` file](https://docs.docker.com/compose/env-file/)
 - [Variable Substitution](https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution)
@@ -190,6 +194,8 @@ This are basically the different parts of our app. We use the names `frontend, b
 ### volume
 
 ### Keywords Breakdown Table
+
+For more info on the keywords see [official docs](https://docs.docker.com/compose/compose-file/compose-file-v3/), see right hand side bar to navigate keywords.
 
 | Keywords | Description                                                                         |
 | -------- | ----------------------------------------------------------------------------------- |

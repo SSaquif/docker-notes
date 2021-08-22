@@ -15,6 +15,7 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
   - [Other Note(s)](#other-notes)
   - [Contents](#contents)
   - [Quick Commands](#quick-commands)
+    - [Quick Cleanup Commands](#quick-cleanup-commands)
   - [Issues](#issues)
     - [Issue 1 (Solved)](#issue-1-solved)
       - [Replicating The Issue](#replicating-the-issue)
@@ -81,7 +82,6 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
     - [Copying Files/Folders Between HOST & CONTAINERS](#copying-filesfolders-between-host--containers)
     - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
     - [Hacky Solution 2](#hacky-solution-2)
-  - [Quick Cleanup Commands](#quick-cleanup-commands)
   - [References](#references)
 
 <!-- tocstop -->
@@ -173,6 +173,7 @@ docker image rm -f <image_id/name>
 docker image rm -f <image_id/name1> <image_id/name2> <image_id/name3>
 
 # REMOVE ALL containers & images (combination of 2 commands)
+# See section below for details
 docker container rm -f $(docker container ls -aq)
 docker image rm -f $(docker image ls -aq)
 
@@ -183,6 +184,21 @@ docker container help
 # copy files
 docker cp <containerID>:/app/log.txt .   # container to host
 docker cp secret.txt <containerID>:/app  # host to container
+```
+
+### Quick Cleanup Commands
+
+```bash
+# remove all containers & images (cobination of 2 commands)
+# images can't be removed if a container from that image exists
+# ls with switch -q just lists all container/image ids only
+# switch -a will list hidden containers as well
+# rm with -f will force remove running containers
+# we pass that to docker image rm as and argument using $()
+# $() is basically used when we want the result of the command inside
+docker container rm -f $(docker container ls -aq)
+docker image rm -f $(docker image ls -aq)
+
 ```
 
 ## Issues
@@ -1110,21 +1126,6 @@ drwxr-xr-x    1 app      app           4096 Aug 20 18:55 node_modules
 drwxrwxr-x    2 app      app           4096 Aug 19 19:14 public
 drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
 -rw-rw-r--    1 app      app         510089 Aug 19 19:14 yarn.lock
-```
-
-## Quick Cleanup Commands
-
-```bash
-# remove all containers & images (cobination of 2 commands)
-# images can't be removed if a container from that image exists
-# ls with switch -q just lists all container/image ids only
-# switch -a will list hidden containers as well
-# rm with -f will force remove running containers
-# we pass that to docker image rm as and argument using $()
-# $() is basically used when we want the result of the command inside
-docker container rm -f $(docker container ls -aq)
-docker image rm -f $(docker image ls -aq)
-
 ```
 
 ## References
