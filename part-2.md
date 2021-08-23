@@ -31,12 +31,13 @@ Running Multi-Container Apps via Docker
     - [volume](#volume)
     - [Keywords Breakdown Table](#keywords-breakdown-table)
   - [Docker and Local MongoDB](#docker-and-local-mongodb)
+    - [MongoDB Compass & Changing DB Port from 27017 to Something Else](#mongodb-compass--changing-db-port-from-27017-to-something-else)
   - [Docker & MongoDB Atlas](#docker--mongodb-atlas)
   - [Building Images](#building-images)
   - [Starting & Stopping the Application](#starting--stopping-the-application)
   - [Docker Network](#docker-network)
   - [Viewing Logs](#viewing-logs)
-  - [Publishing Chnages](#publishing-chnages)
+  - [Publishing Changes](#publishing-changes)
   - [Migrating the Database](#migrating-the-database)
   - [Running Tests](#running-tests)
   - [Quick Commands](#quick-commands)
@@ -169,6 +170,8 @@ This Links are also refrenced below
 
 ## `docker-compose.yml` File Breakdown
 
+> All `docker-compose` commands needs to run from the folder where compose file is located
+
 See folder `3-vidly` for actual example file
 
 In this file we define the building block/services of our applications
@@ -270,16 +273,16 @@ Also see section [Migrating the Database](https://github.com/SSaquif/docker-note
 When not using mongo in cloud (atlas), there are 3 things we have to do.
 
 1. `Step 1:` Put the mongo connection string as an env var in the `docker-compose.yml` file for the `backend/api` service .
-2. The env var has `DB_URL: mongodb://db/vidly` the following signature
+2. The env var `DB_URL: mongodb://db/vidly` has the following signature
    - mongodb://<host-name>/<db-name>
-   - the `<host-name>` is the same as the service name of the databse in the example file it's db
-   - `<db-name>` is self explanatory, here it's vidly
+   - the `<host-name>` is the same as the service name of the databse in the example file it's `db`
+   - `<db-name>` is self explanatory, here it's `vidly`
 3. `Step 2:` In the `db` service add a `volume`
    - because we DO NOT want mongodb to write data to the temporary file system of the container
    - and we have seen earlier volume are the way we persist data in docker
 4. The volume in the example is `vidly:/data/db`, has following format
    - `<volume-name>:/<directory-inside-container>`
-   - `<volume-name>` can be anything, here it's vidly
+   - `<volume-name>` can be anything, here it's `vidly` to be consistent with app name
    - `<directory-inside-container>` is directory of the container where the data that needs to persist is stored
    - for `mongodb` that directory is by default `/data/db`
    - By mapping that directory to a volume, that data is actually stored outside the container
@@ -287,7 +290,9 @@ When not using mongo in cloud (atlas), there are 3 things we have to do.
    - Inside it we define a property whose name is the volume name we used, here it's vidly
    - the property has `NO VALUE`
 
-> Finally if everything works, you can connect to the databse in the container through mongodb compass by giving it the right port number. If you use default port `27017` you can just click connect. This will probably not work if you already have a mongo process running in that port.
+### MongoDB Compass & Changing DB Port from 27017 to Something Else
+
+Finally if everything works, you can connect to the database in the container through mongodb compass by giving it the right port number. If you use default port `27017` you can just click connect. This will probably not work if you already have a mongo process running in that port. Click on `Fill in connection fields individually` just above the connection string form, if you need to change the port number to something else.
 
 ## Docker & MongoDB Atlas
 
@@ -339,9 +344,21 @@ docker-compose down
 
 [See video](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31450213)
 
+When you run docker-compose up, you will probably see something like this. So it creates a docker network.
+
+```bash
+docker-compose up-d
+Creating network "3-vidly_default" with the default driver
+Creating 3-vidly_db_1 ... done
+Creating 3-vidly_backend_1 ... done
+Creating 3-vidly_frontend_1 ... done
+```
+
+> At this point the video shows how to ping the backend container from frontend container. It also talks about how docker comes with a embedded `dns server` and containers have `dns resolvers`. Resolvers in containers ask the server for ip addresses of other containers in the network to communicate.This is how the containers form a network. Video has nice diagrams and all, also shows the network adapters of containers. So just watch the video.
+
 ## Viewing Logs
 
-## Publishing Chnages
+## Publishing Changes
 
 ## Migrating the Database
 
@@ -350,6 +367,8 @@ docker-compose down
 ## Quick Commands
 
 ```bash
+# All docker-compose commands needs to run from the folder where compose file is located
+
 # build image
 docker-compose build
 # man page
@@ -365,7 +384,6 @@ docker-compose up
 docker-compose up --build
 # detached mode, start containers in background
 docker-compose up -d
-
 
 # check containers related to the build
 docker-compose ps
