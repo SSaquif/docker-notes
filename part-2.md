@@ -465,6 +465,8 @@ command: ./docker-entrypoint.sh # extension .sh is optional I believe
 
 ## Running Tests
 
+Running Tests inside docker containers are rather slow, but it can be done.
+
 ## Quick Commands
 
 ```bash
