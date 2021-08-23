@@ -29,6 +29,7 @@ Running Multi-Container Apps via Docker
     - [ports](#ports)
     - [environment](#environment)
     - [volume](#volume)
+    - [command](#command)
     - [Keywords Breakdown Table](#keywords-breakdown-table)
   - [Docker and Local MongoDB](#docker-and-local-mongodb)
     - [MongoDB Compass & Changing DB Port from 27017 to Something Else](#mongodb-compass--changing-db-port-from-27017-to-something-else)
@@ -37,8 +38,13 @@ Running Multi-Container Apps via Docker
   - [Starting & Stopping the Application](#starting--stopping-the-application)
   - [Docker Network](#docker-network)
   - [Viewing Logs](#viewing-logs)
-  - [Publishing Changes](#publishing-changes)
-  - [Migrating the Database](#migrating-the-database)
+  - [Publishing Changes & Live Updates](#publishing-changes--live-updates)
+  - [Database Migration](#database-migration)
+    - [Some Basics](#some-basics)
+    - [Running Migration Commands](#running-migration-commands)
+    - [Waiting Issues](#waiting-issues)
+    - [Solution](#solution)
+    - [Final Improvement](#final-improvement)
   - [Running Tests](#running-tests)
   - [Quick Commands](#quick-commands)
 
@@ -252,6 +258,12 @@ Basically volumes for persisting data. Read more about volumes in `part-1.md`.
 
 For why it's being use here with the database and for a better understanding of usage in general see section [Docker and Local MongoDB](#docker-and-local-mongodb)
 
+### command
+
+This will ovewrite CMD/ENTRYPOINT command of the dockerfile
+
+To know more about what it does in this particular example see section [Database Migration](#database-migration)
+
 ### Keywords Breakdown Table
 
 For more info on the keywords see [official docs](https://docs.docker.com/compose/compose-file/compose-file-v3/), see right hand side bar to navigate keywords.
@@ -358,9 +370,98 @@ Creating 3-vidly_frontend_1 ... done
 
 ## Viewing Logs
 
-## Publishing Changes
+```bash
+# view logs of all relevant containers
+docker-compose logs
+# view logs of individual containers
+# no need for compose, so like before
+# -f tag is for follow (optional)
+docker logs <container> -f
+```
 
-## Migrating the Database
+## Publishing Changes & Live Updates
+
+I have a feeling, in this part I might face the same issue as in part-1 issue-2. Skipped for now. Will come back to it when working on actual projects
+
+## Database Migration
+
+### Some Basics
+
+> Most of the time when we release our app, we want our database to be in a particular shape with some data.
+>
+> This is called Database Migration
+
+For Node and MongoDB we can use the npm package [migrate-mongo](https://www.npmjs.com/package/migrate-mongo) as our migration tool, other dev stacks/frameworks have similar packages or library.
+
+Using such migration tool, we can create DB migration scripts. In the vidly project the migration scripts are stored in the `/migrations` folder. The script is pretty simple, there are 2 functions. One to upgrade the db and one to downgrade it. The up function inserts a bunch of movies to the movies collection and the down function removes them.
+
+The script is called populate-movies and is timestamped as can be seen from the name.
+
+### Running Migration Commands
+
+So now we can run migration commands in the terminal as folows (see migrate-mongo npm link for more details)
+
+```bash
+migrate-mongo up
+```
+
+There's also and alias for the above command in the scripts section of our `package.json` as `db:up`, so alternatively we can run
+
+```bash
+npm run db:up
+# this should also work (not tested)
+npm db:up
+```
+
+### Waiting Issues
+
+Say we want to do DB Migration as part of starting our application.
+
+We add the `command` property to our `backend` service in our `docker-compose.yml` file
+
+However, this can cause some issues. As it is possible that our db engine is not ready at this point (even though the db container is running) and we need to wait for that to be setup before we can execute the `migrate-mongo` command.
+
+```yaml
+# ovewrites CMD of the dockerfile
+command: migrate-mongo && npm start # Waiting Issues
+```
+
+### Solution
+
+Since starting the db engine can take several seconds, we need to use an waiting script. The [docker docs](https://docs.docker.com/compose/startup-order/) (or google docker wait for container) has some recommendations.
+
+We are using the [sh-compatible wait-for](https://github.com/Eficode/wait-for) script. We simply put he `shell script` file in the root of `backend` folder and update the command as follows. We want to wait for port `27017` of our `db` container.
+
+The `wait-for` script takes 1 argument in the following format:`<service-name>:<port-number>`
+
+```yaml
+# Solves waiting issues
+# ./wait-for <service-name>:<port-number>
+command: ./wait-for db:27017 && migrate-mongo && npm start
+```
+
+### Final Improvement
+
+Since the command is a bit long, we can simply turn it into a shell script of it's own. In the project folder the script is named `docker-entrypoint.sh` (I beleive this is a docker naming convention). The script is pretty straightforward as follows
+
+```sh
+#!/bin/sh
+
+echo "Waiting for MongoDB to start..."
+./wait-for db:27017
+
+echo "Migrating the databse..."
+npm run db:up
+
+echo "Starting the server..."
+npm start
+```
+
+Finally we update the `docker-compose.yml` file one last time as follows
+
+```yml
+command: ./docker-entrypoint.sh # extension .sh is optional I believe
+```
 
 ## Running Tests
 
@@ -390,4 +491,11 @@ docker-compose ps
 
 # stop application
 docker-compose down
+
+# view logs of all relevant containers
+docker-compose logs
+# view logs of individual containers
+# no need for compose, so like before
+# -f tag is for follow (optional)
+docker logs <container> -f
 ```

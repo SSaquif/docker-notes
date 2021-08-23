@@ -16,7 +16,7 @@ services:
       - 3001:3001
     environment:
       DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
-    command: ./docker-entrypoint.sh
+    command: ./docker-entrypoint.sh # ovewrites CMD of the dockerfile
 
   db:
     image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile
