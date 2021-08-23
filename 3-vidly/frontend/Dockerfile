@@ -1,12 +1,14 @@
 FROM node:14.16.0-alpine3.13
 
 RUN addgroup app && adduser -S -G app app
+RUN mkdir /app
+RUN chown -R app:app /app
 USER app
 
 WORKDIR /app
-COPY package*.json ./
+COPY --chown=app:app package*.json ./
 RUN npm install
-COPY . .
+COPY --chown=app:app . .
 
 EXPOSE 3000 
 
