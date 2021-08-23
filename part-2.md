@@ -20,14 +20,16 @@ Running Multi-Container Apps via Docker
     - [`yml` vs `json`](#yml-vs-json)
     - [Which One to Pick?](#which-one-to-pick)
   - [Useful Refrences for `docker-compose.yml` Compose File](#useful-refrences-for-docker-composeyml-compose-file)
-  - [`docker-compose.yml` file breakdown](#docker-composeyml-file-breakdown)
+  - [`docker-compose.yml` File Breakdown](#docker-composeyml-file-breakdown)
     - [Example File](#example-file)
     - [version](#version)
     - [services](#services)
+    - [ports](#ports)
+    - [environment](#environment)
     - [volume](#volume)
     - [Keywords Breakdown Table](#keywords-breakdown-table)
-  - [Docker and Mongo Database](#docker-and-mongo-database)
-    - [Docker & MongoDB Atlas](#docker--mongodb-atlas)
+  - [Docker and Local MongoDB](#docker-and-local-mongodb)
+  - [Docker & MongoDB Atlas](#docker--mongodb-atlas)
   - [Building Images](#building-images)
   - [Starting & Stopping the Application](#starting--stopping-the-application)
   - [Docker Network](#docker-network)
@@ -133,7 +135,7 @@ This Links are also refrenced below
 - [Use variables form `.env` file](https://docs.docker.com/compose/env-file/)
 - [Variable Substitution](https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution)
 
-## `docker-compose.yml` file breakdown
+## `docker-compose.yml` File Breakdown
 
 See folder `3-vidly` for actual example file
 
@@ -161,7 +163,7 @@ services:
     ports:
       - 3001:3001
     environment:
-      DB_URL: mongodb://db/vidly
+      DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
     command: ./docker-entrypoint.sh
 
   db:
@@ -172,7 +174,7 @@ services:
       - vidly:/data/db
 
 volumes:
-  vidly:
+  vidly: # No value, just property/volume name
 ```
 
 ### version
@@ -189,9 +191,31 @@ version: "3.8"
 
 This are basically the different parts of our app. We use the names `frontend, backend and db`. But the service names are arbitary. Another common convention is call frontend `web` and backend `api`
 
+Each service should have it's own `dockerfile` unless it's something like a database. In which case we usually build using an image from dockerhub
+
 > `Important`: Each service will have it's own dockerfile. Little trickier for services like DB. We pull an image for dockerhub for the DB. See the relevant Database sections below.
 
+### ports
+
+Port mappings for the application
+
+Is a list since there can be multiple port mappings
+
+Some ports are fixed, for example mongodb is `27017`, React is `3000`. Probably possible change port on container after mapping for all.
+
+### environment
+
+Environmental variables for the application. They can be a list or key value pair separated by `:` as in the example above
+
+Sometimes we might want to use variables from a `.env` file instead. See [Variable Substitution](https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution)
+
+The `DB_URL` in this case is the mongodb connection string
+
 ### volume
+
+Basically volumes for persisting data. Read more about volumes in `part-1.md`.
+
+For why it's being use here with the database and for a better understanding of usage in general see section [Docker and Local MongoDB](#docker-and-local-mongodb)
 
 ### Keywords Breakdown Table
 
@@ -205,15 +229,33 @@ For more info on the keywords see [official docs](https://docs.docker.com/compos
 | build    | path to folder of where the docker file is located                                  |
 | volume   | [see above](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#volume)   |
 
-## Docker and Mongo Database
+## Docker and Local MongoDB
 
 `TODO` Put his section in the mongo db notes as well
 
-`TODO` Make it its own file if section gets too long
-
 Also see section [Migrating the Database](https://github.com/SSaquif/docker-notes/blob/master/part-2.md#migrating-the-database)
 
-### Docker & MongoDB Atlas
+When not using mongo in cloud (atlas), there are 3 things we have to do.
+
+1. `Step 1:` Put the mongo connection string as an env var in the `docker-compose.yml` file for the `backend/api` service .
+2. The env var has `DB_URL: mongodb://db/vidly` the following signature
+   - mongodb://<host-name>/<db-name>
+   - the `<host-name>` is the same as the service name of the databse in the example file it's db
+   - `<db-name>` is self explanatory, here it's vidly
+3. `Step 2:` In the `db` service add a `volume`
+   - because we DO NOT want mongodb to write data to the temporary file system of the container
+   - and we have seen earlier volume are the way we persist data in docker
+4. The volume in the example is `vidly:/data/db`, has following format
+   - `<volume-name>:/<directory-inside-container>`
+   - `<volume-name>` can be anything, here it's vidly
+   - `<directory-inside-container>` is directory of the container where the data that needs to persist is stored
+   - for `mongodb` that directory is by default `/data/db`
+   - By mapping that directory to a volume, that data is actually stored outside the container
+5. Finally we have to define another property called `volume` at the same level as `services` & `version`
+   - Inside it we define a property whose name is the volume name we used, here it's vidly
+   - the property has `NO VALUE`
+
+## Docker & MongoDB Atlas
 
 Need to figure this out, will probably have use [variables from `.env files`](https://docs.docker.com/compose/env-file/)
 
@@ -221,7 +263,15 @@ Need to figure this out, will probably have use [variables from `.env files`](ht
 
 ## Building Images
 
+```bash
+
+```
+
 ## Starting & Stopping the Application
+
+```bash
+
+```
 
 ## Docker Network
 

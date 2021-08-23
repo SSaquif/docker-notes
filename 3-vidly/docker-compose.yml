@@ -1,15 +1,29 @@
 version: "3.8"
 
 services:
-  frontend:
+  frontend: # service name, can be anything see section below
+    depends_on:
+      - backend
     build: ./frontend # folder where the dockerfile is located
-    ports:
-      - 3000:3000 # mapping port of host:container
+    ports: # mapping port of host:container
+      - 3000:3000
+
   backend:
+    depends_on:
+      - db
     build: ./backend
     ports:
-      - 4000:4000 # mapping port of host:container
+      - 3001:3001
+    environment:
+      DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
+    command: ./docker-entrypoint.sh
+
   db:
     image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile
     ports:
-      - 27071:27071 # this is the default port on which mongo db listens on
+      - 27017:27017
+    volumes:
+      - vidly:/data/db
+
+volumes:
+  vidly: # No value, just property/volume name
