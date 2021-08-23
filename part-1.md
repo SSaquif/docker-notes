@@ -20,8 +20,9 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
     - [Issue 1 (Solved)](#issue-1-solved)
       - [Replicating The Issue](#replicating-the-issue)
       - [My Fix for the Issue](#my-fix-for-the-issue)
-  - [Issue 2: Unsolved](#issue-2-unsolved)
-    - [Hacky Solution](#hacky-solution)
+    - [Issue 2: Unsolved](#issue-2-unsolved)
+      - [Hacky Solution 1](#hacky-solution-1)
+      - [Hacky Solution 1](#hacky-solution-1-1)
   - [Installation](#installation)
   - [Using Docker Without `sudo`](#using-docker-without-sudo)
   - [Introduction](#introduction)
@@ -81,7 +82,7 @@ Docker Fundamentals & Running Simple Single Container Apps via Docker
       - [Testing Volume Data is Persistant](#testing-volume-data-is-persistant)
     - [Copying Files/Folders Between HOST & CONTAINERS](#copying-filesfolders-between-host--containers)
     - [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
-    - [Hacky Solution 2](#hacky-solution-2)
+      - [Hacky Solution 2](#hacky-solution-2)
   - [References](#references)
 
 <!-- tocstop -->
@@ -260,13 +261,17 @@ EXPOSE 3000
 CMD ["yarn", "start"]
 ```
 
-## Issue 2: Unsolved
+### Issue 2: Unsolved
 
 See section [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
 
-### Hacky Solution
+#### Hacky Solution 1
 
 Set `node` as the default user in dockerfile and give it correct permissions, that should work.
+
+#### Hacky Solution 1
+
+See section [Hacky Solution 2](#hacky-solution-2)
 
 ## Installation
 
@@ -1106,7 +1111,7 @@ drwxrwxr-x    2 node     node          4096 Aug 19 19:14 src
 -rw-rw-r--    1 node     node        510089 Aug 19 19:14 yarn.lock
 ```
 
-### Hacky Solution 2
+#### Hacky Solution 2
 
 Changed the mapping as noted [here](https://forum.codewithmosh.com/t/docker-section-5-working-with-containers-lesson-11-error-and-solution/6380)
 
