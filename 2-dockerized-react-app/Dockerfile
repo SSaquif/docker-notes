@@ -10,9 +10,10 @@ RUN chown -R app:app /app
 USER app
 WORKDIR /app
 # Copy and install separtely to speed up builds
-COPY --chown=app:app package*.json yarn.lock ./ 
+COPY --chown=app:app package*.json yarn.lock ./
+# install node_modules 
 RUN yarn install
-# Copy (& also give owner rights to the current user probably unnecessary)
+# Copy all other files (& also give owner rights to the current user)
 COPY --chown=app:app . .
 # the env var is unnecessary, just for testing
 ENV API_URL=http://api.myapp.com/

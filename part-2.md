@@ -14,6 +14,8 @@ Running Multi-Container Apps via Docker
 - [Docker: Part 2](#docker-part-2)
   - [Other Note(s)](#other-notes)
   - [Contents](#contents)
+  - [Issues](#issues)
+    - [Issue 1: File Permissions](#issue-1-file-permissions)
   - [Our Example App](#our-example-app)
   - [Advantage of Docker for Such Apps](#advantage-of-docker-for-such-apps)
   - [`yml` Files](#yml-files)
@@ -40,6 +42,36 @@ Running Multi-Container Apps via Docker
   - [Quick Commands](#quick-commands)
 
 <!-- tocstop -->
+
+## Issues
+
+### Issue 1: File Permissions
+
+To get everything working I had to make some changes to the individual dockerfiles in the frontend and backend folders of the vidly app.
+
+The changes had to do with file permissions, see comments in file below
+
+```dockerfile
+FROM node:14.16.0-alpine3.13
+
+RUN addgroup app && adduser -S -G app app
+# added next 2 lines
+RUN mkdir /app
+RUN chown -R app:app /app
+
+USER app
+
+WORKDIR /app
+# added user+group permissions using --chown
+COPY --chown=app:app package*.json ./
+RUN npm install
+# added user+group permissions using --chown
+COPY --chown=app:app . .
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+```
 
 ## Our Example App
 
@@ -255,6 +287,8 @@ When not using mongo in cloud (atlas), there are 3 things we have to do.
    - Inside it we define a property whose name is the volume name we used, here it's vidly
    - the property has `NO VALUE`
 
+> Finally if everything works, you can connect to the databse in the container through mongodb compass by giving it the right port number. If you use default port `27017` you can just click connect. This will probably not work if you already have a mongo process running in that port.
+
 ## Docker & MongoDB Atlas
 
 Need to figure this out, will probably have use [variables from `.env files`](https://docs.docker.com/compose/env-file/)
@@ -263,17 +297,47 @@ Need to figure this out, will probably have use [variables from `.env files`](ht
 
 ## Building Images
 
-```bash
+I had to make some changes regarding file permission for builds to be successful on my computer. See Issue 1 at the top of the file for setails
 
+```bash
+# build image
+docker-compose build
+# man page
+docker-compose build --help
+# build without using cache
+docker-compose build --no-cache
+# attempt to pull newer version of image if applicable
+docker-compose build --pull
 ```
 
 ## Starting & Stopping the Application
 
 ```bash
+# Start
+docker-compose up
+# (re)-build and start
+docker-compose up --build
+# detached mode, start containers in background
+docker-compose up -d
 
+# check containers related to the build
+docker-compose ps
+# You get the following, State == Up == You are good to go
+# Each container has a number (here it's 1)
+# Because we can start multiple containers from same image for high availability & scalability
+       Name                     Command               State                      Ports
+----------------------------------------------------------------------------------------------------------
+3-vidly_backend_1    docker-entrypoint.sh ./doc ...   Up      0.0.0.0:3001->3001/tcp,:::3001->3001/tcp
+3-vidly_db_1         docker-entrypoint.sh mongod      Up      0.0.0.0:27017->27017/tcp,:::27017->27017/tcp
+3-vidly_frontend_1   docker-entrypoint.sh npm start   Up      0.0.0.0:3000->3000/tcp,:::3000->3000/tcp
+
+# stop application
+docker-compose down
 ```
 
 ## Docker Network
+
+[See video](https://codewithmosh.com/courses/the-ultimate-docker-course/lectures/31450213)
 
 ## Viewing Logs
 
@@ -286,6 +350,26 @@ Need to figure this out, will probably have use [variables from `.env files`](ht
 ## Quick Commands
 
 ```bash
+# build image
+docker-compose build
+# man page
+docker-compose build --help
+# build without using cache
+docker-compose build --no-cache
+# attempt to pull newer version of image if applicable
+docker-compose build --pull
+
 # Starting a Multi Container App
 docker-compose up
+# (re)-build and start
+docker-compose up --build
+# detached mode, start containers in background
+docker-compose up -d
+
+
+# check containers related to the build
+docker-compose ps
+
+# stop application
+docker-compose down
 ```
