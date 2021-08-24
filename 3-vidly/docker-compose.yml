@@ -7,6 +7,14 @@ services:
     build: ./frontend # folder where the dockerfile is located
     ports: # mapping port of host:container
       - 3000:3000
+    # volumes:
+    #   - ./frontend:/app
+
+  # took out `volume` cause it did not work
+  # keep it if it does, cause tests need live updates too
+  frontend-tests: # service name, can be anything see section below
+    image: 3-vidly_frontend # build from fe image
+    command: npm test
 
   backend:
     depends_on:
@@ -16,7 +24,17 @@ services:
       - 3001:3001
     environment:
       DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
+    # volumes:
+    #   - ./backend:/app # volume mapping for live updates; <relative path in host>:<container path>
     command: ./docker-entrypoint.sh # ovewrites CMD of the dockerfile
+
+  # took out `volume` cause it did not work
+  # keep it if it does, cause tests need live updates too
+  backend-tests:
+    image: 3-vidly_backend
+    environment:
+      DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
+    command: npm test # ovewrites CMD of the dockerfile
 
   db:
     image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile

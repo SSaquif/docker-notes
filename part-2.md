@@ -14,6 +14,7 @@ Running Multi-Container Apps via Docker
 - [Docker: Part 2](#docker-part-2)
   - [Other Note(s)](#other-notes)
   - [Contents](#contents)
+  - [Quick Commands](#quick-commands)
   - [Issues](#issues)
     - [Issue 1: File Permissions](#issue-1-file-permissions)
   - [Our Example App](#our-example-app)
@@ -46,9 +47,43 @@ Running Multi-Container Apps via Docker
     - [Solution](#solution)
     - [Final Improvement](#final-improvement)
   - [Running Tests](#running-tests)
-  - [Quick Commands](#quick-commands)
 
 <!-- tocstop -->
+
+## Quick Commands
+
+```bash
+# All docker-compose commands needs to run from the folder where compose file is located
+
+# build image
+docker-compose build
+# man page
+docker-compose build --help
+# build without using cache
+docker-compose build --no-cache
+# attempt to pull newer version of image if applicable
+docker-compose build --pull
+
+# Starting a Multi Container App
+docker-compose up
+# (re)-build and start
+docker-compose up --build
+# detached mode, start containers in background
+docker-compose up -d
+
+# check containers related to the build
+docker-compose ps
+
+# stop application
+docker-compose down
+
+# view logs of all relevant containers
+docker-compose logs
+# view logs of individual containers
+# no need for compose, so like before
+# -f tag is for follow (optional)
+docker logs <container> -f
+```
 
 ## Issues
 
@@ -383,6 +418,10 @@ docker logs <container> -f
 
 I have a feeling, in this part I might face the same issue as in part-1 issue-2. Skipped for now. Will come back to it when working on actual projects
 
+> I was right, same Issue. Also it seems this is something most people do not do.
+
+However this [link](https://stackoverflow.com/questions/39397548/how-to-give-non-root-user-in-docker-container-access-to-a-volume-mounted-on-the) might provide the solution. Idea is to have a shell script in the folder that gets run to change user permissions. But I am already doing the same thing in the dockerfile. Perhaps try doing it through the `command` property of compose file.
+
 ## Database Migration
 
 ### Some Basics
@@ -467,37 +506,62 @@ command: ./docker-entrypoint.sh # extension .sh is optional I believe
 
 Running Tests inside docker containers are rather slow, but it can be done.
 
-## Quick Commands
+Here is what the file looks like after adding tests
 
-```bash
-# All docker-compose commands needs to run from the folder where compose file is located
+Changes:
 
-# build image
-docker-compose build
-# man page
-docker-compose build --help
-# build without using cache
-docker-compose build --no-cache
-# attempt to pull newer version of image if applicable
-docker-compose build --pull
+1. Instead of images we use build and pass the built `image name`
+   - default `image name` is the folder names joind using underscore
+2. Dont need `ports`
+3. Dont need `depends_on`
+4. If `volume` worked keep it, cause test's needs live update as well
 
-# Starting a Multi Container App
-docker-compose up
-# (re)-build and start
-docker-compose up --build
-# detached mode, start containers in background
-docker-compose up -d
+```yml
+version: "3.8"
 
-# check containers related to the build
-docker-compose ps
+services:
+  frontend: # service name, can be anything see section below
+    depends_on:
+      - backend
+    build: ./frontend # folder where the dockerfile is located
+    ports: # mapping port of host:container
+      - 3000:3000
+    # volumes:
+    #   - ./frontend:/app
 
-# stop application
-docker-compose down
+  # took out `volume` cause it did not work
+  # keep it if it does, cause tests need live updates too
+  frontend-tests: # service name, can be anything see section below
+    image: 3-vidly_frontend # build from fe image
+    command: npm test
 
-# view logs of all relevant containers
-docker-compose logs
-# view logs of individual containers
-# no need for compose, so like before
-# -f tag is for follow (optional)
-docker logs <container> -f
+  backend:
+    depends_on:
+      - db
+    build: ./backend
+    ports:
+      - 3001:3001
+    environment:
+      DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
+    # volumes:
+    #   - ./backend:/app # volume mapping for live updates; <relative path in host>:<container path>
+    command: ./docker-entrypoint.sh # ovewrites CMD of the dockerfile
+
+  # took out `volume` cause it did not work
+  # keep it if it does, cause tests need live updates too
+  backend-tests:
+    image: 3-vidly_backend
+    environment:
+      DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
+    command: npm test # ovewrites CMD of the dockerfile
+
+  db:
+    image: mongo:4.0-xenial # pulling image from dockerhub instead of bulding from dockerfile
+    ports:
+      - 27017:27017
+    volumes:
+      - vidly:/data/db
+
+volumes:
+  vidly: # No value, just property/volume name
 ```

@@ -1057,6 +1057,8 @@ docker cp secret.txt <containerID>:/app               # example
 >
 > `Hacky Solution:` Set `node` as the default user in dockerfile and give it correct permissions, that should work. But I don't like that seems like a security risk
 > `Hacky Solution 2:` [Idea from here](https://forum.codewithmosh.com/t/docker-section-5-working-with-containers-lesson-11-error-and-solution/6380), but will proably stop working if any files outside `/src` changes. Also see section below
+>
+> `Possible solution`: (Also referenced in `part-2.md` publishing changes part) This [link](https://stackoverflow.com/questions/39397548/how-to-give-non-root-user-in-docker-container-access-to-a-volume-mounted-on-the) might provide the solution. Idea is to have a shell script in the folder that gets run to change user permissions. But I am already doing the same thing in the dockerfile. Perhaps try doing it through the `command` property of compose file.
 
 We usually want to keep working and see those changes reflected in the containers right away while we are developing projects.
 
