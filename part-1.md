@@ -265,6 +265,8 @@ CMD ["yarn", "start"]
 
 See section [`Important` Publishing Changes & Sharing Source Code with Containers](#important-publishing-changes--sharing-source-code-with-containers)
 
+FOund more possible solution using `:z`. See publishing changes of part-2.md for links
+
 #### Hacky Solution 1
 
 Set `node` as the default user in dockerfile and give it correct permissions, that should work.

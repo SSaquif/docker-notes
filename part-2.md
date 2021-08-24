@@ -420,6 +420,12 @@ I have a feeling, in this part I might face the same issue as in part-1 issue-2.
 
 > I was right, same Issue. Also it seems this is something most people do not do.
 
+Here are some more links to possible solutions using `:z`:
+
+- [Link 1, github issue](https://github.com/wazuh/wazuh-docker/issues/33)
+- [Link 2, what is :z flag](https://stackoverflow.com/questions/35218194/what-is-z-flag-in-docker-containers-volumes-from-option)
+- [Link 3, syntax in compose file for :z](https://stackoverflow.com/questions/60680394/docker-compose-using-with-selinux)
+
 However this [link](https://stackoverflow.com/questions/39397548/how-to-give-non-root-user-in-docker-container-access-to-a-volume-mounted-on-the) might provide the solution. Idea is to have a shell script in the folder that gets run to change user permissions. But I am already doing the same thing in the dockerfile. Perhaps try doing it through the `command` property of compose file.
 
 ## Database Migration
@@ -503,6 +509,8 @@ command: ./docker-entrypoint.sh # extension .sh is optional I believe
 ```
 
 ## Running Tests
+
+> Note: I dont think tests work as expected, maybe it does. But tests still worked when I had permissions issue in FE an BE containers using volumes. However those images were built and the tests were not using volume mapping. So who knows
 
 Running Tests inside docker containers are rather slow, but it can be done.
 
