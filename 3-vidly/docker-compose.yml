@@ -13,6 +13,8 @@ services:
   # took out `volume` cause it did not work
   # keep it if it does, cause tests need live updates too
   frontend-tests: # service name, can be anything see section below
+    depends_on:
+      - frontend
     image: 3-vidly_frontend # build from fe image
     command: npm test
 
@@ -31,6 +33,9 @@ services:
   # took out `volume` cause it did not work
   # keep it if it does, cause tests need live updates too
   backend-tests:
+    depends_on:
+      - backend
+      - db
     image: 3-vidly_backend
     environment:
       DB_URL: mongodb://db/vidly # env variable, see variable sunbstitution link above as well
